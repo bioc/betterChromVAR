@@ -103,7 +103,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   if(verbose) message("Preparing bias bins")
   
   # get background bins (B)
-  background <- getBinProbMatrix(expectation, bias = bias, w = w, bs = bs)
+  background <- getBackgroundBins(expectation, bias = bias, w = w, bs = bs)
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs
   
@@ -261,7 +261,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   peak_p <- expectation / sum(expectation)
   
   # bias bins
-  background <- getBinProbMatrix(expectation, bias=bias, w=w, bs=bs)
+  background <- getBackgroundBins(expectation, bias=bias, w=w, bs=bs)
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs
   bin2peakMat <- sparseMatrix(i=bin_map, j=seq_along(expectation), 
