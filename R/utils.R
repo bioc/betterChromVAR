@@ -166,7 +166,7 @@ addGCBias <- function(object, genome){
   stopifnot(!is.null(rowRanges(object)))
   seqs <- Biostrings::getSeq(x=genome, rowRanges(object))
   # same as chromVAR:
-  freqs <- letterFrequency(seqs, c("A", "C", "G", "T"))
+  nucfreqs <- letterFrequency(seqs, c("A", "C", "G", "T"))
   gc <- rowSums(nucfreqs[, 2:3]) / rowSums(nucfreqs)
   rowData(object)$bias <- gc
   object
