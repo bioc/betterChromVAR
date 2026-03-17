@@ -60,6 +60,7 @@ There are multiple ways of generating your peak counts, and the original `r Bioc
 Here we'll use dummy data as example:
 
 ```{r}
+library(SummarizedExperiment)
 library(betterChromVAR)
 attach(getDummyData())
 counts
