@@ -126,9 +126,15 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     if(inherits(out, "sparseMatrix")){
       out@x[out@x < 0] <- 0
     }else{
-      out[which(out<0)] <- 0
+      out[out<0] <- 0
     }
-    if(isTRUE(enforceZeros)) out[which(counts==0L)] <- 0
+    if(isTRUE(enforceZeros)){
+      if(inherits(counts, "sparseMatrix")){
+        out <- pmin(out,1000*counts)
+      }else{
+        out[counts==0L] <- 0
+      }
+    }
   }
   
   if(!inherits(object, "SummarizedExperiment")) return(out)

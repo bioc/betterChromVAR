@@ -28,7 +28,8 @@
 }
 
 .get_expectation <- function(counts, grouping=NULL){
-  if(is.null(grouping) || length(unique(grouping))==1) return(rowMeans(counts))
+  if(is.null(grouping) || length(unique(grouping))==1)
+    return(Matrix::rowMeans(counts))
   grouping <- factor(grouping)
   stopifnot(length(grouping)==ncol(counts))
   # compute expectation based on an average of group averages
