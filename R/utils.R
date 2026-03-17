@@ -162,7 +162,7 @@ getDummyData <- function(){
 #' # not run:
 #' # se <- addGCBias(se, genome)
 addGCBias <- function(object, genome){
-  stopfinot(inherits(object, "SummarizedExperiment"))
+  stopifnot(inherits(object, "SummarizedExperiment"))
   stopifnot(!is.null(rowRanges(object)))
   seqs <- Biostrings::getSeq(x=genome, rowRanges(object))
   # same as chromVAR:
