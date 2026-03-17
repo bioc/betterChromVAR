@@ -64,7 +64,7 @@
 #' # features based on the same base frequency :
 #' baseFreq <- abs(rnorm(20))
 #' baseFreq <- baseFreq/sum(baseFreq)
-#' mat <- sapply(c(10,20,30,40,50), \(tot){
+#' mat <- sapply(c(10,20,30,40,50), function(tot){
 #'   rpois(length(baseFreq), baseFreq*tot)
 #' })
 #' # apply shrinkage and confirm that shrunk proportions are better correlated

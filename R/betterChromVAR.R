@@ -65,7 +65,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     motifCD <- colData(annotations)
     annotations <- assay(annotations)
   } 
-  
+  stopifnot(length(dim(annotations))==2)
   if(max(annotations) > 1 || min(annotations)<0)
     warning("`annotations` should be either binary or weights from 0 to 1.")
   
@@ -77,6 +77,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     object <- SummarizedExperiment(list(counts=object))
     counts <- assay(object)
   }
+  stopifnot(length(dim(counts))==2)
   
   stopifnot(!is.null(bias) && length(bias)==nrow(object))
   
@@ -127,7 +128,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     
     if(verbose) message("Applying shrinkage")
     il <- split(seq_len(ncol(binCounts)), grouping)
-    binCounts <- Reduce(cbind2, bplapply(il, BPPARAM=BPPARAM, \(i){
+    binCounts <- Reduce(cbind2, bplapply(il, BPPARAM=BPPARAM, function(i){
       binCounts2 <- binCounts[,i]
       cs2 <- cs[i]
       if(shrinkage=="average"){
@@ -154,7 +155,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   i <- seq_len(ncol(counts))
   if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 & ncol(counts>5000)){
     chunks <- split(i, cut(i, nW, labels=FALSE))
-    res <- bplapply(chunks, BPPARAM=BPPARAM, \(i){
+    res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
       if(shrinkage=="none"){
         binCounts2 <- bin2peakMat %*% counts[,i]
       }else{
@@ -163,8 +164,9 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
       .getDeviations(binBinProbs, annotations, motif_bin_counts, binCounts2,
                      counts[,i])
     })
-    res <- list(deviations = Reduce(cbind2, lapply(res, \(x) x$deviations)),
-                z = Reduce(cbind2, lapply(res, \(x) x$z)))
+    res <- list(deviations=Reduce(cbind2,
+                                  lapply(res, function(x) x$deviations)),
+                z=Reduce(cbind2, lapply(res, function(x) x$z)))
   }else{
     if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
     res <- .getDeviations(binBinProbs, annotations, motif_bin_counts,
