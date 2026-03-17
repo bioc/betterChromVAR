@@ -144,7 +144,7 @@ getDummyData <- function(){
   list(counts=counts, motifMatches=matches)
 }
 
-#' addGCbias
+#' addGCBias
 #' 
 #' Add the `bias` column to the object's rowData, containing the regions' 
 #' proportion of Gs and Cs.
@@ -160,8 +160,8 @@ getDummyData <- function(){
 #'
 #' @examples
 #' # not run:
-#' # se <- addGCbias(se)
-addGCbias <- function(object, genome){
+#' # se <- addGCBias(se, genome)
+addGCBias <- function(object, genome){
   stopfinot(inherits(object, "SummarizedExperiment"))
   stopifnot(!is.null(rowRanges(object)))
   seqs <- Biostrings::getSeq(x=genome, rowRanges(object))
