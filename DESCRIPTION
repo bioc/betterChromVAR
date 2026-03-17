@@ -1,0 +1,15 @@
+Package: betterChromVAR
+Title: Improved ChromVAR (Chromatin Variation Across Regions)
+Description:
+  A much faster analytical implementation of chromVAR, with additional 
+  features, used to infer TF activity from (bulk or single-cell) ATAC-seq data and 
+  motif annotations (or binding probabilities). The package also includes the 
+  CVnorm normalization method based on the chromVAR logic.
+Version: 0.0.1
+Authors@R: 
+    person("Pierre-Luc", "Germain", , "pierre-luc.germain@hest.ethz.ch", role = c("aut", "cre"))
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
