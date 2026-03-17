@@ -21,6 +21,9 @@
 #' @importFrom SummarizedExperiment assay rowData
 #' @importFrom matrixStats colMins colMaxs
 #' @export
+#' @examples
+#' counts_se <- getDummyData()$counts
+#' background <- getBackgroundBins(counts_se)
 getBackgroundBins <- function(x, bias=NULL, w=0.1, bs=50, pseudo=0){
   if (inherits(x, "SummarizedExperiment") || 
       inherits(x, "SingleCellExperiment")) {

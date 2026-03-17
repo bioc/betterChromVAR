@@ -41,12 +41,18 @@
 #'   z-scores for each motif/sample.
 #' @importFrom SummarizedExperiment SummarizedExperiment assay colData rowData
 #' @importFrom S4Vectors metadata
-#' @importFrom Matrix crossprod sparseMatrix kronecker Diagonal cbind2
+#' @importFrom Matrix crossprod sparseMatrix kronecker Diagonal cbind2 colSums
 #' @importFrom BiocParallel bplapply SerialParam MulticoreParam bpnworkers
 #' @export
+#' @examples
+#' attach(getDummyData())
+#' # if GC content not already in the object, use:
+#' # counts <- addGCBias(counts, genome=YOUR_GENOME)
+#' dev <- betterChromVAR(counts, motifMatches)
+#' dev
 betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL, 
                            expectation=NULL, verbose=FALSE, bs=50, sigma=1,
-                           nthreads=NULL, w=0.05,
+                           nthreads=NULL, w=0.1,
                            shrinkage=c("none", "average", "smooth")){
   
   # Check input validity
@@ -112,12 +118,12 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
                               dims=c(nrow(binBinProbs), length(expectation)))
 
   # motif-containing peaks per bin (M x B)
-  motif_bin_counts <- t(annotations) %*% t(bin2peakMat)
+  motif_bin_counts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   binCounts <- NULL
   
   if(shrinkage != "none"){
     binCounts <- bin2peakMat %*% counts
-    cs <- colSums(binCounts)
+    cs <- Matrix::colSums(binCounts)
     
     if(verbose) message("Applying shrinkage")
     il <- split(seq_len(ncol(binCounts)), grouping)
@@ -236,7 +242,14 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
 #' @return If `object` is a matrix, then a matrix of corrected counts of the 
 #'   same dimensions. If `object` is a SummarizedExperiment-like object, then
 #'   the object is returned with an extra "corrected" assay.
+#'   
+#' @importFrom SummarizedExperiment assay<- assayNames
 #' @export
+#' @examples
+#' counts_se <- getDummyData()$counts
+#' # if GC content not already in the object, use:
+#' # counts_se <- addGCBias(counts_se, genome=YOUR_GENOME)
+#' counts_se <- CVnorm(counts_se)
 CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping, 
                    bs=50, w=0.05, Z=FALSE, enforceZeros=TRUE){
   
@@ -268,7 +281,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
                               dims=c(nrow(binBinProbs), length(expectation)))
   
   # Bin-level observed vs expected
-  cs <- colSums(counts)
+  cs <- Matrix::colSums(counts)
   binCounts <- bin2peakMat %*% counts
   bin_p_expected <- as.numeric(bin2peakMat %*% peak_p)
   
@@ -291,7 +304,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     group_means <- .fastColAgg(log_R, g) %*% Diagonal(x=1/as.numeric(table(g)))
     # Compute means and expand back to sample dimensions
     group_means_mat <- group_means[, as.integer(g)]
-    SSW <- rowSums((log_R - group_means_mat)^2)
+    SSW <- Matrix::rowSums((log_R - group_means_mat)^2)
     
     # SSB (Between-group Sum of Squares)
     SSB <- pmax(0, SST - SSW)

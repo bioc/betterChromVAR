@@ -1,4 +1,4 @@
-.fastColNorm <- function(x, cs=colSums(x)){
+.fastColNorm <- function(x, cs=Matrix::colSums(x)){
   x %*% Diagonal(x = 1/cs)
 }
 
@@ -28,14 +28,16 @@
 }
 
 .get_expectation <- function(counts, grouping=NULL){
-  if(is.null(grouping)) return(rowMeans(counts))
+  if(is.null(grouping) || length(unique(grouping))==1) return(rowMeans(counts))
   grouping <- factor(grouping)
   stopifnot(length(grouping)==ncol(counts))
   # compute expectation based on an average of group averages
   agcnt <- .fastColAgg(counts, grouping)
-  cs <- colSums(agcnt)
+  if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
+  cs <- Matrix::colSums(agcnt)
   agcnt <- .fastColNorm(agcnt, cs=cs)*median(cs)
-  rowMeans(agcnt)
+  if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
+  Matrix::rowMeans(agcnt)
 }
 
 
@@ -55,6 +57,7 @@
 #' @returns A matrix of the same dimensions as `x` representing the shrunk 
 #'  column-wise proportions.
 #' @export
+#' @importFrom Matrix rowSums
 #'
 #' @examples
 #' # generate a matrix of 5 sampling (with different total counts) of 20 
@@ -68,12 +71,12 @@
 #' shrunk_mat <- shrinkColumnProps(mat)
 #' mean(cor(shrunk_mat))>mean(cor(mat))
 shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
-  cs <- colSums(x)
+  cs <- Matrix::colSums(x)
   bigTotal <- sum(cs)
   p <- .fastColNorm(x, cs=cs)
   
   if(is.null(shrinkTo)){
-    mu <- rowSums(x) / bigTotal
+    mu <- Matrix::rowSums(x) / bigTotal
   }else{
     mu <- shrinkTo
   }
@@ -90,7 +93,7 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
     v_weighted <- bigTotal*pos*(1-pos)
   }else{
     # weighted row variances
-    v_weighted <- rowSums(sweep((p - mu)^2, 2, cs, "*")) / bigTotal
+    v_weighted <- Matrix::rowSums(sweep((p - mu)^2, 2, cs, "*")) / bigTotal
   }
   
   # Estimate M (precision parameter)
@@ -116,4 +119,55 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
   den_mat <- sweep(matrix(M, nrow = nrow(x), ncol = ncol(x)), 2, cs, "+")
   
   (x + alpha) / den_mat
+}
+
+
+#' Dummy data for testing purposes
+#'
+#' @returns A list with the slots `counts` and `matches`
+#' @importFrom Matrix Matrix
+#' @export
+#'
+#' @examples
+#' out <- getDummyData()
+#' (counts <- out$counts)
+#' matches <- out$motifMatches
+getDummyData <- function(){
+  counts <- matrix(rnbinom(500 * 10, mu=50, size=2), nrow=500, ncol=10)
+  colnames(counts) <- paste0("sample", 1:10)
+  counts <- SummarizedExperiment(list(counts=counts))
+  rowData(counts)$bias <- pmin(1,pmax(0,rnorm(500, mean=0.55, sd=0.05)))
+  matches <- Matrix(
+    data = sample(c(0, 1), 500 * 5, replace = TRUE, prob = c(0.85, 0.15)), 
+    nrow = 500, ncol = 5, sparse = TRUE )
+  colnames(matches) <- paste0("motif",1:5)
+  list(counts=counts, motifMatches=matches)
+}
+
+#' addGCbias
+#' 
+#' Add the `bias` column to the object's rowData, containing the regions' 
+#' proportion of Gs and Cs.
+#'
+#' @param object An object inheriting RangedSummarizedExperiment.
+#' @param genome A BSgenome object or any other genome object supported by 
+#'   \code{\link[Biostrings]{getSeq}}.
+#'
+#' @returns `object` with the GC content in `rowData(object)$bias`.
+#' @importFrom Biostrings getSeq letterFrequency
+#' @importFrom SummarizedExperiment rowRanges rowData<- 
+#' @export
+#'
+#' @examples
+#' # not run:
+#' # se <- addGCbias(se)
+addGCbias <- function(object, genome){
+  stopfinot(inherits(object, "SummarizedExperiment"))
+  stopifnot(!is.null(rowRanges(object)))
+  seqs <- Biostrings::getSeq(x=genome, rowRanges(object))
+  # same as chromVAR:
+  freqs <- letterFrequency(seqs, c("A", "C", "G", "T"))
+  gc <- rowSums(nucfreqs[, 2:3]) / rowSums(nucfreqs)
+  rowData(object)$bias <- gc
+  object
 }
