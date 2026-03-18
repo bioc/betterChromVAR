@@ -20,6 +20,7 @@ Imports:
     BiocParallel,
     Biostrings,
     Matrix,
+    methods,
     S4Vectors,
     matrixStats,
     stats
