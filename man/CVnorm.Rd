@@ -13,6 +13,7 @@ CVnorm(
   bs = 50,
   w = 0.05,
   Z = FALSE,
+  useWidthAdj = NULL,
   enforceZeros = TRUE
 )
 }
@@ -39,6 +40,12 @@ SummarizedExperiment-like object.}
 
 \item{Z}{Logical; whether to return standardized residuals (Z-scores)
 instead of the (default) corrected counts.}
+
+\item{useWidthAdj}{Whether to adjust for the different width of the regions.
+If omitted, will be TRUE if the average absolute difference to the median
+width is greater than 10\% of the median width. If TRUE, will adjust for
+\code{pmax(200L,width)}. If an integer scalar, will adjust for
+\code{pmax(useWidthAdj,width)}.}
 
 \item{enforceZeros}{Logical; whether to enforce that zero counts should
 remain zeroes after correction (ignored if \code{Z=TRUE}).}

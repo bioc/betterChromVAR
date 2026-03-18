@@ -21,6 +21,11 @@
 #' @param w Standard deviation of the Gaussian kernel for bin smoothing.
 #' @param Z Logical; whether to return standardized residuals (Z-scores) 
 #'   instead of the (default) corrected counts.
+#' @param useWidthAdj Whether to adjust for the different width of the regions.
+#'   If omitted, will be TRUE if the average absolute difference to the median 
+#'   width is greater than 10% of the median width. If TRUE, will adjust for 
+#'   `pmax(200L,width)`. If an integer scalar, will adjust for 
+#'   `pmax(useWidthAdj,width)`.
 #' @param enforceZeros Logical; whether to enforce that zero counts should 
 #'   remain zeroes after correction (ignored if `Z=TRUE`).
 #' @author Pierre-Luc Germain
@@ -45,12 +50,26 @@
 #' counts_se <- CVnorm(counts_se)
 CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping, 
                    toAssay="corrected", bs=50, w=0.05, Z=FALSE, 
-                   enforceZeros=TRUE){
+                   useWidthAdj=NULL, enforceZeros=TRUE){
   
   # input validity
+  if(!isFALSE(useWidthAdj) && 
+     (!inherits(object, "SummarizedExperiment") || is.null(rowRanges(object))))
+    stop("The object does not contain rowRanges.",
+         "Either include them, or set `useWidthAdj=FALSE`.")
+
+  wi <- NULL  
   if (inherits(object, "SummarizedExperiment") || 
       inherits(object, "SingleCellExperiment")) {
     if(is.null(bias)) bias <- rowData(object)$bias
+    if(is.null(useWidthAdj)){
+      wi <- width(object)
+      useWidthAdj <- (mean(abs(wi-median(wi)))/median(wi)) > 0.1
+    }else{
+      stopifnot(isTRUE(useWidthAdj) || 
+                  (is.integer(useWidthAdj) && length(useWidthAdj)==1))
+      wi <- width(object)
+    }
     counts <- assay(object, "counts")
   } else {
     counts <- object
@@ -58,17 +77,21 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   stopifnot(!is.null(bias) && length(bias) == nrow(counts))
   stopifnot(is.null(grouping) || length(grouping)==ncol(counts))
   stopifnot(is.null(smoothGrouping) || length(smoothGrouping)==ncol(counts))
-  
-  # global profile
-  expectation <- .get_expectation(counts, grouping)
-  if(any(expectation==0)){
+
+  if(any(rowSums(counts)==0))
     stop("Some peaks have an expectation of zero, most likely because they ",
          "have zero counts. Please remove them.")
-  }
+  
+  # global profile  
+  expectation2 <- expectation <- .get_expectation(counts, grouping)
   peak_p <- expectation / sum(expectation)
   
   # bias bins
-  background <- getBackgroundBins(expectation, bias=bias, w=w, bs=bs)
+  if(!isFALSE(useWidthAdj)){
+    if(isTRUE(useWidthAdj)) useWidthAdj <- 200L
+    expectation2 <- useWidthAdj*expectation/pmax(wi, useWidthAdj)
+  }
+  background <- getBackgroundBins(expectation2, bias=bias, w=w, bs=bs)
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs
   bin2peakMat <- sparseMatrix(i=bin_map, j=seq_along(expectation), 
