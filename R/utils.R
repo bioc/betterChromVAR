@@ -141,14 +141,14 @@ getDummyData <- function(nRegions=500, nSamples=10, nMotifs=5){
   counts <- matrix(rnbinom(nRegions * nSamples, mu=rep(mu,nSamples), size=2),
                    nrow=nRegions, ncol=nSamples)
 
-  colnames(counts) <- paste0("sample", 1:10)
+  colnames(counts) <- paste0("sample", seq_len(nSamples))
   gr <- GRanges("chr1", IRanges(seq_len(nRegions)*100, width=20))
   counts <- SummarizedExperiment(list(counts=counts), rowRanges=gr)
   rowData(counts)$bias <- pmin(1,pmax(0,rnorm(nRegions, mean=0.5, sd=0.05)))
   matches <- Matrix(
     data=sample(c(0L, 1L), nRegions*nMotifs, replace=TRUE, prob=c(0.85, 0.15)), 
     nrow=nRegions, ncol=nMotifs, sparse=TRUE)
-  colnames(matches) <- paste0("motif",1:5)
+  colnames(matches) <- paste0("motif",seq_len(nMotifs))
   list(counts=counts, motifMatches=matches)
 }
 
