@@ -80,6 +80,8 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   smooth_exp_p <- as.numeric(binBinProbs %*% bin_p_expected)
   bias_factor <- smooth_obs_p / smooth_exp_p
   
+  if(!inherits(counts, "sparseMatrix")) bias_factor <- as.matrix(bias_factor)
+  
   # variance-based weighting (qsmooth logic)
   if(!is.null(smoothGrouping) && length(unique(smoothGrouping))>1){
     g <- factor(smoothGrouping)
@@ -136,6 +138,8 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
       }
     }
   }
+  
+  if(!inherits(counts, "sparseMatrix")) out <- as.matrix(out)
   
   if(!inherits(object, "SummarizedExperiment")) return(out)
   
