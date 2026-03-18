@@ -108,7 +108,7 @@ rowData(dev)
 
 If you are using betterChromVAR (or ChromVAR, for that matter) on single-cell data with multiple cell types, the way to best run it depends on whether your are interested in differences within cell types, or between cell types. If interested in differences between cell types, run it on the entire dataset, specifying the cell types as `grouping` argument to `betterChromVAR`. In this way, rare an abundant cell types will be given the same weight in computing the expectation.
 
-If you are interested in differences within cell types (e.g. between samples/conditions), you should instead run the method separately for each cell type. In this way, the background bins will be defined based on the enrichment in the given cell type, leading to better capture of the bias. The drawback, however, is that the values won't be comparable across cell types.
+If you are interested in differences within cell types (e.g. between samples/conditions), you should instead run the method separately for each cell type. In this way, the background bins will be defined based on the enrichment in the given cell type, leading to better capture of the bias. The drawback, however, is that the values won't be comparable across cell types. To test across conditions, we also recommend using it on pseudobulk data.
 
 ## Bias-normalization of bulk ATAC-seq data
 
