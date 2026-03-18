@@ -2,7 +2,7 @@
 #' 
 #' Get chromVAR-like bin-bin background selection probabilities
 #' 
-#' @param object A chromVAR counts object
+#' @param x A chromVAR counts object
 #' @param bias Vector of GCBias (default from object)
 #' @param w Standard deviation of the Gaussian kernel)
 #' @param bs Number of bins per dimension (total bins = bs^2)
@@ -17,9 +17,10 @@
 #'   inferring transcription-factor-associated accessibility from 
 #'   single-cell epigenomic data, Nature Methods, doi: 10.1038/nmeth.4401
 #'   
-#' @importFrom stats cov
+#' @importFrom stats cov dnorm dist
 #' @importFrom SummarizedExperiment assay rowData
 #' @importFrom matrixStats colMins colMaxs
+#' @importFrom methods as is
 #' @export
 #' @examples
 #' counts_se <- getDummyData()$counts

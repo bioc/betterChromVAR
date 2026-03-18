@@ -15,6 +15,7 @@
 }
 
 # Create a 1D Gaussian kernel matrix
+#' @importFrom stats median
 .diagKernalMatrix <- function(n, sigma, sparsify=TRUE){
   x <- seq_len(n)
   dist_mat <- outer(x, x, "-")
@@ -127,6 +128,7 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
 #'
 #' @returns A list with the slots `counts` and `matches`
 #' @importFrom Matrix Matrix
+#' @importFrom stats rnorm rnbinom
 #' @export
 #'
 #' @examples

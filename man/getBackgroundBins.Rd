@@ -7,6 +7,8 @@
 getBackgroundBins(x, bias = NULL, w = 0.1, bs = 50, pseudo = 0)
 }
 \arguments{
+\item{x}{A chromVAR counts object}
+
 \item{bias}{Vector of GCBias (default from object)}
 
 \item{w}{Standard deviation of the Gaussian kernel)}
@@ -15,8 +17,6 @@ getBackgroundBins(x, bias = NULL, w = 0.1, bs = 50, pseudo = 0)
 
 \item{pseudo}{Optional pseudocount to be added. This should not be needed
 with standard workflows.}
-
-\item{object}{A chromVAR counts object}
 }
 \value{
 a list with the slots \code{peak2bin} (which bin each peak belongs to)

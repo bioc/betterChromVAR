@@ -40,6 +40,8 @@ from \code{rowData(object)$bias}.}
 giving the expected counts. If NULL, defaults to mean counts (eventually
 grouped, see \code{grouping}).}
 
+\item{verbose}{Logical; whether to output progress messages (default FALSE).}
+
 \item{bs}{Number of bins per dimension (total bins = \code{bs^2}).}
 
 \item{sigma}{Sigma parameter for the 2D smoothing. Ignored unless
@@ -55,6 +57,11 @@ which is suboptimal if the bin is sparsely populated. High values (e.g. >1)
 will lead to homogeneous sampling, which will fail to correct for bias.
 A value of 0.05 will be highly similar to the original chromVAR, and values
 below 0.2 are recommended.}
+
+\item{shrinkage}{The method to use to shrink background (i.e. bias) bin
+frequencies. Either "average" (shrinks to the bin's average across
+cells/samples of the same group), "smooth" (per-sample 2D smoothing over
+the bin matrix), or "none" (default).}
 }
 \value{
 A SummarizedExperiment containing the adjusted deviations and

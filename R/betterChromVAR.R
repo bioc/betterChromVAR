@@ -25,12 +25,17 @@
 #' @param bs Number of bins per dimension (total bins = `bs^2`).
 #' @param sigma Sigma parameter for the 2D smoothing. Ignored unless 
 #'   `shrinkage="smooth"`.
+#' @param shrinkage The method to use to shrink background (i.e. bias) bin 
+#'   frequencies. Either "average" (shrinks to the bin's average across 
+#'   cells/samples of the same group), "smooth" (per-sample 2D smoothing over
+#'   the bin matrix), or "none" (default).
 #' @param expectation Optional vector of length equal to `nrow(object)` 
 #'   giving the expected counts. If NULL, defaults to mean counts (eventually
 #'   grouped, see `grouping`).
 #' @param nthreads Either an integer scalar indicating the number of threads to
 #'   use, or a BiocParallelParam object. This is only used for subsets of the 
 #'   steps.
+#' @param verbose Logical; whether to output progress messages (default FALSE).
 #' @author Pierre-Luc Germain
 #' @references
 #'   Schep A.N., Wu B., Buenrostro J.D., Greenleaf W.J. (2017) chromVAR: 
@@ -173,10 +178,18 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
                           binCounts, counts)
   }
   
+  sd_deviations <- matrixStats::rowSds(res$z, na.rm=TRUE)
+  # copied from chromVAR:
+  p_sd <- pchisq((ncol(counts) - 1) * (sd_deviations^2),
+                 df=(ncol(counts)-1), lower.tail = FALSE)
+  d <- data.frame(variability = sd_deviations, var.pval = p_sd, 
+                  var.adjPval = p.adjust(p = p_sd, method = "BH"))
+  if(!is.null(motifCD)) d <- cbind(motifCD, d)
+  
   SummarizedExperiment(
     assays = res,
     colData = colData(object),
-    rowData = motifCD,
+    rowData = d,
     metadata = metadata(object)
   )
 }
@@ -188,17 +201,11 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   V <- (binBinProbs %*% binCounts^2) - (E^2)
   
   # motif-level background stats (M x S)
-  motif_bg_exp <- motif_bin_counts %*% E
-  motif_bg_sd <- motif_bin_counts %*% V
-  if(is(motif_bg_sd, "sparseMatrix")){
-    motif_bg_sd@x <- sqrt(pmax(0, motif_bg_sd@x))
-    motif_bg_sd <- drop0(motif_bg_sd)
-  }else{
-    motif_bg_sd <- sqrt(pmax(0, as.matrix(motif_bg_sd)))
-  }
+  motif_bg_exp <- as.matrix(motif_bin_counts %*% E)
+  motif_bg_sd <- sqrt(pmax(0, as.matrix(motif_bin_counts %*% V)))
   
   # observed motif sums (M x S)
-  observed_motif_sum <- Matrix::crossprod(annotations, counts)
+  observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
   
   # deviation = (Obs - bgExpect) / bgExpect; z = (Obs-exp)/sdExpect
   deviations <- observed_motif_sum - motif_bg_exp
@@ -207,4 +214,3 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   
   list(deviations=deviations, z=z_scores)
 }
-
