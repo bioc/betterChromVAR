@@ -9,9 +9,9 @@
 #' @param pseudo Optional pseudocount to be added. This should not be needed 
 #'   with standard workflows.
 #' 
-#' @return a list with the slots `peak2bin` (which bin each peak belongs to) 
-#'   and `binBinProbs` (the probability of a peak from a given bin being 
-#'   selected as background for another).
+#' @return a list with the slots `peak2bin` (which bin each peak belongs to), 
+#'   `binDensity` and `binBinProbs` (the probability of a peak from a given bin 
+#'   being selected as background for another).
 #' @references
 #'   Schep A.N., Wu B., Buenrostro J.D., Greenleaf W.J. (2017) chromVAR: 
 #'   inferring transcription-factor-associated accessibility from 
@@ -55,8 +55,8 @@ getBackgroundBins <- function(x, bias=NULL, w=0.1, bs=50, pseudo=0){
   idx2 <- pmax(1, pmin(bs, idx2))
   
   # Linearize index
-  peak_to_bin <- idx1 + (idx2 - 1) * bs
-  bin_density <- tabulate(peak_to_bin, nbins = bs^2)
+  peak2bin <- idx1 + (idx2 - 1) * bs
+  binDensity <- tabulate(peak2bin, nbins = bs^2)
   
   # bin center grid (for distance calculation)
   bins1 <- seq(minCoords[1], maxCoords[1], length.out = bs)
@@ -67,7 +67,7 @@ getBackgroundBins <- function(x, bias=NULL, w=0.1, bs=50, pseudo=0){
   bin_dist <- dist(bin_data)
   W <- dnorm(as.matrix(bin_dist), 0, w)
   
-  normalizer <- as.vector(W %*% bin_density)
+  normalizer <- as.vector(W %*% binDensity)
   # Avoid division by zero for empty regions
   normalizer[normalizer < 1e-9] <- 1
   binBinProbs <- W/normalizer
@@ -77,8 +77,9 @@ getBackgroundBins <- function(x, bias=NULL, w=0.1, bs=50, pseudo=0){
     binBinProbs <- as(binBinProbs, "sparseMatrix")
     
   return(list(
-    peak2bin = peak_to_bin,
+    peak2bin = peak2bin,
     #binBinDist = bin_dist,
+    binDensity = binDensity,
     binBinProbs = binBinProbs
   ))
 }

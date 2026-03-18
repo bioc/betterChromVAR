@@ -19,9 +19,9 @@ getBackgroundBins(x, bias = NULL, w = 0.1, bs = 50, pseudo = 0)
 with standard workflows.}
 }
 \value{
-a list with the slots \code{peak2bin} (which bin each peak belongs to)
-and \code{binBinProbs} (the probability of a peak from a given bin being
-selected as background for another).
+a list with the slots \code{peak2bin} (which bin each peak belongs to),
+\code{binDensity} and \code{binBinProbs} (the probability of a peak from a given bin
+being selected as background for another).
 }
 \description{
 Get chromVAR-like bin-bin background selection probabilities

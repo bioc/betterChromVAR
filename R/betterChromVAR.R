@@ -123,8 +123,6 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   bin2peakMat <- sparseMatrix(i=bin_map, j=seq_along(expectation), 
                               dims=c(nrow(binBinProbs), length(expectation)))
 
-  # motif-containing peaks per bin (M x B)
-  motif_bin_counts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   binCounts <- NULL
   
   if(shrinkage != "none"){
@@ -163,15 +161,15 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
       binCounts2 <- NULL
       if(shrinkage!="none") binCounts2 <- binCounts[,i]
-      .getDeviations(binBinProbs, annotations, motif_bin_counts, binCounts2,
-                     counts[,i], bin2peakMat)
+      .getDeviations(binBinProbs, annotations, binCounts2,
+                     counts[,i], bin2peakMat, background$binDensity)
     })
     res <- list(deviations=Reduce(cbind2,
                                   lapply(res, function(x) x$deviations)),
                 z=Reduce(cbind2, lapply(res, function(x) x$z)))
   }else{
-    res <- .getDeviations(binBinProbs, annotations, motif_bin_counts,
-                          binCounts, counts, bin2peakMat)
+    res <- .getDeviations(binBinProbs, annotations, binCounts, counts, 
+                          bin2peakMat, background$binDensity)
   }
   
   sd_deviations <- matrixStats::rowSds(res$z, na.rm=TRUE)
@@ -180,6 +178,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
                  df=(ncol(counts)-1), lower.tail = FALSE)
   d <- data.frame(variability = sd_deviations, var.pval = p_sd, 
                   var.adjPval = p.adjust(p = p_sd, method = "BH"))
+  
   if(!is.null(motifCD)) d <- cbind(motifCD, d)
   
   SummarizedExperiment(
@@ -190,18 +189,22 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   )
 }
 
-.getDeviations <- function(binBinProbs, annotations, motif_bin_counts,
-                           binCounts=NULL, counts, bin2peakMat){
+.getDeviations <- function(binBinProbs, annotations, binCounts=NULL, 
+                           counts, bin2peakMat, binDensity){
   
   if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
   
   # bin-level expectations and variances (B x S)
   E <- binBinProbs %*% binCounts
-  V <- (binBinProbs %*% (bin2peakMat %*% (counts^2))) - (E^2)
+  V <- as.matrix( ((bin2peakMat %*% (counts^2))/pmax(1, binDensity))-
+                    ((E/pmax(1, binDensity))^2) )
+  V[V < 0] <- 0
+  V <- binBinProbs %*% (V * binDensity)
   
   # motif-level background stats (M x S)
-  motif_bg_exp <- as.matrix(motif_bin_counts %*% E)
-  motif_bg_sd <- sqrt(pmax(0, as.matrix(motif_bin_counts %*% V)))
+  motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
+  motif_bg_exp <- as.matrix(motifBinCounts %*% E)
+  motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))
   
   # observed motif sums (M x S)
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
