@@ -14,6 +14,9 @@
 #'   bias toward more abundant groups).
 #' @param smoothGrouping Optional grouping to determine correction strength. 
 #'   If bias is consistent within these groups, correction is reduced.
+#' @param toAssay The name of the assay in which to store the corrected data 
+#'   (default 'corrected'). Ignored unless `object` is a 
+#'   SummarizedExperiment-like object.
 #' @param bs Number of bins per dimension (total bins = `bs^2`).
 #' @param w Standard deviation of the Gaussian kernel for bin smoothing.
 #' @param Z Logical; whether to return standardized residuals (Z-scores) 
@@ -31,7 +34,7 @@
 #'     
 #' @return If `object` is a matrix, then a matrix of corrected counts of the 
 #'   same dimensions. If `object` is a SummarizedExperiment-like object, then
-#'   the object is returned with an extra "corrected" assay.
+#'   the object is returned with an extra assay named based on `toAssay`.
 #'   
 #' @importFrom SummarizedExperiment assay<- assayNames
 #' @export
@@ -41,7 +44,8 @@
 #' # counts_se <- addGCBias(counts_se, genome=YOUR_GENOME)
 #' counts_se <- CVnorm(counts_se)
 CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping, 
-                   bs=50, w=0.05, Z=FALSE, enforceZeros=TRUE){
+                   toAssay="corrected", bs=50, w=0.05, Z=FALSE, 
+                   enforceZeros=TRUE){
   
   # input validity
   if (inherits(object, "SummarizedExperiment") || 
@@ -143,6 +147,6 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   
   if(!inherits(object, "SummarizedExperiment")) return(out)
   
-  assay(object, "corrected") <- out
+  assay(object, toAssay) <- out
   return(object)
 }

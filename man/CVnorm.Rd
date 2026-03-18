@@ -9,6 +9,7 @@ CVnorm(
   bias = NULL,
   grouping = NULL,
   smoothGrouping = grouping,
+  toAssay = "corrected",
   bs = 50,
   w = 0.05,
   Z = FALSE,
@@ -28,6 +29,10 @@ bias toward more abundant groups).}
 \item{smoothGrouping}{Optional grouping to determine correction strength.
 If bias is consistent within these groups, correction is reduced.}
 
+\item{toAssay}{The name of the assay in which to store the corrected data
+(default 'corrected'). Ignored unless \code{object} is a
+SummarizedExperiment-like object.}
+
 \item{bs}{Number of bins per dimension (total bins = \code{bs^2}).}
 
 \item{w}{Standard deviation of the Gaussian kernel for bin smoothing.}
@@ -41,7 +46,7 @@ remain zeroes after correction (ignored if \code{Z=TRUE}).}
 \value{
 If \code{object} is a matrix, then a matrix of corrected counts of the
 same dimensions. If \code{object} is a SummarizedExperiment-like object, then
-the object is returned with an extra "corrected" assay.
+the object is returned with an extra assay named based on \code{toAssay}.
 }
 \description{
 Corrects ATAC peak counts by removing the effects of technical biases
