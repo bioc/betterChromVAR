@@ -126,6 +126,10 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
 
 #' Dummy data for testing purposes
 #'
+#' @param nRegions Number of regions to generate
+#' @param nSamples Number of samples to generate
+#' @param nMotifs Number of motifs to generate
+#'
 #' @returns A list with the slots `counts` and `matches`
 #' @importFrom Matrix Matrix
 #' @importFrom stats rnorm rnbinom

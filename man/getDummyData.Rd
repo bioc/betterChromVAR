@@ -6,6 +6,13 @@
 \usage{
 getDummyData(nRegions = 500, nSamples = 10, nMotifs = 5)
 }
+\arguments{
+\item{nRegions}{Number of regions to generate}
+
+\item{nSamples}{Number of samples to generate}
+
+\item{nMotifs}{Number of motifs to generate}
+}
 \value{
 A list with the slots \code{counts} and \code{matches}
 }
