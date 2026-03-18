@@ -161,21 +161,17 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 & ncol(counts>5000)){
     chunks <- split(i, cut(i, nW, labels=FALSE))
     res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
-      if(shrinkage=="none"){
-        binCounts2 <- bin2peakMat %*% counts[,i]
-      }else{
-        binCounts2 <- binCounts[,i]
-      }
+      binCounts2 <- NULL
+      if(shrinkage!="none") binCounts2 <- binCounts[,i]
       .getDeviations(binBinProbs, annotations, motif_bin_counts, binCounts2,
-                     counts[,i])
+                     counts[,i], bin2peakMat)
     })
     res <- list(deviations=Reduce(cbind2,
                                   lapply(res, function(x) x$deviations)),
                 z=Reduce(cbind2, lapply(res, function(x) x$z)))
   }else{
-    if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
     res <- .getDeviations(binBinProbs, annotations, motif_bin_counts,
-                          binCounts, counts)
+                          binCounts, counts, bin2peakMat)
   }
   
   sd_deviations <- matrixStats::rowSds(res$z, na.rm=TRUE)
@@ -195,10 +191,13 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
 }
 
 .getDeviations <- function(binBinProbs, annotations, motif_bin_counts,
-                           binCounts, counts){
+                           binCounts=NULL, counts, bin2peakMat){
+  
+  if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
+  
   # bin-level expectations and variances (B x S)
   E <- binBinProbs %*% binCounts
-  V <- (binBinProbs %*% binCounts^2) - (E^2)
+  V <- (binBinProbs %*% (bin2peakMat %*% (counts^2))) - (E^2)
   
   # motif-level background stats (M x S)
   motif_bg_exp <- as.matrix(motif_bin_counts %*% E)
