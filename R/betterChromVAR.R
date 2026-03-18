@@ -204,7 +204,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   # motif-level background stats (M x S)
   motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   motif_bg_exp <- as.matrix(motifBinCounts %*% E)
-  motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))
+  motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))/2
   
   # observed motif sums (M x S)
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
