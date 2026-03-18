@@ -129,20 +129,25 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
 #' @returns A list with the slots `counts` and `matches`
 #' @importFrom Matrix Matrix
 #' @importFrom stats rnorm rnbinom
+#' @importFrom GenomicRanges GRanges
 #' @export
 #'
 #' @examples
 #' out <- getDummyData()
 #' (counts <- out$counts)
 #' matches <- out$motifMatches
-getDummyData <- function(){
-  counts <- matrix(rnbinom(500 * 10, mu=50, size=2), nrow=500, ncol=10)
+getDummyData <- function(nRegions=500, nSamples=10, nMotifs=5){
+  mu <- sample.int(100, nRegions, replace=TRUE)
+  counts <- matrix(rnbinom(nRegions * nSamples, mu=rep(mu,nSamples), size=2),
+                   nrow=nRegions, ncol=nSamples)
+
   colnames(counts) <- paste0("sample", 1:10)
-  counts <- SummarizedExperiment(list(counts=counts))
-  rowData(counts)$bias <- pmin(1,pmax(0,rnorm(500, mean=0.55, sd=0.05)))
+  gr <- GRanges("chr1", IRanges(seq_len(nRegions)*100, width=20))
+  counts <- SummarizedExperiment(list(counts=counts), rowRanges=gr)
+  rowData(counts)$bias <- pmin(1,pmax(0,rnorm(nRegions, mean=0.5, sd=0.05)))
   matches <- Matrix(
-    data = sample(c(0, 1), 500 * 5, replace = TRUE, prob = c(0.85, 0.15)), 
-    nrow = 500, ncol = 5, sparse = TRUE )
+    data=sample(c(0L, 1L), nRegions*nMotifs, replace=TRUE, prob=c(0.85, 0.15)), 
+    nrow=nRegions, ncol=nMotifs, sparse=TRUE)
   colnames(matches) <- paste0("motif",1:5)
   list(counts=counts, motifMatches=matches)
 }

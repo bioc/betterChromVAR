@@ -20,6 +20,7 @@ Depends:
 Imports:
     BiocParallel,
     Biostrings,
+    GenomicRanges,
     Matrix,
     methods,
     S4Vectors,

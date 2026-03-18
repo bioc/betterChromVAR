@@ -4,7 +4,7 @@
 \alias{getDummyData}
 \title{Dummy data for testing purposes}
 \usage{
-getDummyData()
+getDummyData(nRegions = 500, nSamples = 10, nMotifs = 5)
 }
 \value{
 A list with the slots \code{counts} and \code{matches}
