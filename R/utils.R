@@ -183,3 +183,13 @@ addGCBias <- function(object, genome){
   rowData(object)$bias <- gc
   object
 }
+
+.groupingInput <- function(grouping, object){
+  if(is.character(grouping) && length(grouping)==1 && 
+     inherits(object, "SummarizedExperiment") &&
+     grouping %in% colnames(colData(object))){
+    grouping <- colData(object)[[grouping]]
+  }
+  stopifnot(length(grouping)==ncol(object))
+  factor(grouping)
+}

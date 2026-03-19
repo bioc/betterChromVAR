@@ -31,7 +31,8 @@ the groupings of the columns of \code{object}. This is optionally used to 1)
 compute the base expectation such that rare cell types are given as much
 weight as abundant ones, and 2) apply shrinkage (if \code{shrinkage!="none"})
 on a per-grouping fashion. In single-cell data, the grouping can for
-instance be the interaction of samples and cell types.}
+instance be the interaction of samples and cell types. (The name of a
+colData column of \code{object} can also be provided.)}
 
 \item{bias}{Per-peak bias (i.e. GC content). If omitted, will try to get it
 from \code{rowData(object)$bias}.}

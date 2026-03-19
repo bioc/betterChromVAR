@@ -75,8 +75,8 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     counts <- object
   }
   stopifnot(!is.null(bias) && length(bias) == nrow(counts))
-  stopifnot(is.null(grouping) || length(grouping)==ncol(counts))
-  stopifnot(is.null(smoothGrouping) || length(smoothGrouping)==ncol(counts))
+  grouping <- .groupingInput(grouping)
+  smoothGrouping <- .groupingInput(smoothGrouping)
 
   if(any(rowSums(counts)==0))
     stop("Some peaks have an expectation of zero, most likely because they ",

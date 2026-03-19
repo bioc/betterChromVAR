@@ -13,7 +13,8 @@
 #'   compute the base expectation such that rare cell types are given as much 
 #'   weight as abundant ones, and 2) apply shrinkage (if `shrinkage!="none"`) 
 #'   on a per-grouping fashion. In single-cell data, the grouping can for 
-#'   instance be the interaction of samples and cell types.
+#'   instance be the interaction of samples and cell types. (The name of a 
+#'   colData column of `object` can also be provided.)
 #' @param bias Per-peak bias (i.e. GC content). If omitted, will try to get it
 #'   from `rowData(object)$bias`.
 #' @param w Standard deviation of the Gaussian kernel. Values close to zero will
@@ -99,8 +100,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   }
 
   if(is.null(grouping)) grouping <- rep(factor("all"), ncol(object))
-  grouping <- factor(grouping)
-  stopifnot(length(grouping)==ncol(object))
+  grouping <- .groupingInput(grouping)
   ngroups <- length(levels(grouping))
                     
   if(is.null(nthreads)){
@@ -205,6 +205,8 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   motif_bg_exp <- as.matrix(motifBinCounts %*% E)
   motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))/2
+  # note: dividing SD by 2 here because that's what reproduces the scale of the
+  # original CV z-scores, but I've no idea why this is needed...
   
   # observed motif sums (M x S)
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
