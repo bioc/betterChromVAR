@@ -15,6 +15,7 @@ betterChromVAR(
   sigma = 1,
   nthreads = NULL,
   w = 0.1,
+  dev2global = TRUE,
   shrinkage = c("none", "average", "smooth")
 )
 }
@@ -59,6 +60,11 @@ which is suboptimal if the bin is sparsely populated. High values (e.g. >1)
 will lead to homogeneous sampling, which will fail to correct for bias.
 A value of 0.05 will be highly similar to the original chromVAR, and values
 below 0.2 are recommended.}
+
+\item{dev2global}{Logical; whether the adjusted deviations should be relative
+to the global expectation (default TRUE), which replicates the original
+chromVAR. Otherwise the deviations are relative to the background
+expecation.}
 
 \item{shrinkage}{The method to use to shrink background (i.e. bias) bin
 frequencies. Either "average" (shrinks to the bin's average across

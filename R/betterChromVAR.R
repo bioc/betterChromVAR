@@ -1,6 +1,6 @@
 #' betterChromVAR
 #' 
-#' A fast, analytic implementation of chromVAR's computeDeviations, 
+#' A fast, analytic implementation of `chromVAR`'s `computeDeviations`, 
 #' additionally enabling balanced expectations and bias shrinkage.
 #' 
 #' @param object A SummarizedExperiment (or SingleCellExperiment) with an assay
@@ -34,8 +34,12 @@
 #' @param expectation Optional vector of length equal to `nrow(object)` 
 #'   giving the expected counts. If NULL, defaults to mean counts (eventually
 #'   grouped, see `grouping`).
+#' @param dev2global Logical; whether the adjusted deviations should be relative
+#'   to the global expectation (default TRUE), which replicates the original 
+#'   chromVAR. Otherwise the deviations are relative to the background 
+#'   expectation of the cell/sample.
 #' @param nthreads Either an integer scalar indicating the number of threads to
-#'   use, or a BiocParallelParam object. This is only used for subsets of the 
+#'   use, or a `BiocParallelParam` object. This is only used for subsets of the 
 #'   steps.
 #' @param verbose Logical; whether to output progress messages (default FALSE).
 #' @author Pierre-Luc Germain
@@ -60,7 +64,7 @@
 #' dev
 betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL, 
                            expectation=NULL, verbose=FALSE, bs=50, sigma=1,
-                           nthreads=NULL, w=0.1,
+                           nthreads=NULL, w=0.1, dev2global=TRUE,
                            shrinkage=c("none", "average", "smooth")){
   
   # Check input validity
@@ -128,6 +132,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
                               dims=c(nrow(binBinProbs), length(expectation)))
 
   binCounts <- NULL
+  if(!dev2global) expectation <- NULL
   
   if(shrinkage != "none"){
     binCounts <- bin2peakMat %*% counts
@@ -165,15 +170,17 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
       binCounts2 <- NULL
       if(shrinkage!="none") binCounts2 <- binCounts[,i]
-      .getDeviations(binBinProbs, annotations, binCounts2,
-                     counts[,i], bin2peakMat, background$binDensity)
+      .getDeviations(binBinProbs, annotations, binCounts2, counts[,i],
+                     bin2peakMat, background$binDensity,
+                     expectation=expectation)
     })
     res <- list(deviations=Reduce(cbind2,
                                   lapply(res, function(x) x$deviations)),
                 z=Reduce(cbind2, lapply(res, function(x) x$z)))
   }else{
     res <- .getDeviations(binBinProbs, annotations, binCounts, counts, 
-                          bin2peakMat, background$binDensity)
+                          bin2peakMat, background$binDensity,
+                          expectation=expectation)
   }
   
   sd_deviations <- matrixStats::rowSds(res$z, na.rm=TRUE)
@@ -194,7 +201,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
 }
 
 .getDeviations <- function(binBinProbs, annotations, binCounts=NULL, 
-                           counts, bin2peakMat, binDensity){
+                           counts, bin2peakMat, binDensity, expectation=NULL){
   
   if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
   
@@ -214,9 +221,18 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
   
   # deviation = (Obs - bgExpect) / bgExpect; z = (Obs-exp)/sdExpect
-  deviations <- observed_motif_sum - motif_bg_exp
+  deviations <- observed_motif_sum - motif_bg_exp  
   z_scores <- deviations / motif_bg_sd
-  deviations <- deviations / motif_bg_exp
-  
+  if(is.null(expectation)){
+    # use the cell's background as expectation
+    deviations <- deviations / motif_bg_exp
+  }else{
+    # global motif expectation
+    # denom = motif peak counts scaled by the cell's libsize
+    # (this should be like the original CV)
+    globalMotifAvg <- as.vector(Matrix::crossprod(annotations, expectation))
+    sf <- Matrix::colSums(counts) / sum(expectation)
+    deviations <- deviations/outer(globalMotifAvg, sf)
+  }
   list(deviations=deviations, z=z_scores)
 }
