@@ -208,9 +208,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   # motif-level background stats (M x S)
   motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   motif_bg_exp <- as.matrix(motifBinCounts %*% E)
-  motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))/2
-  # note: dividing SD by 2 here because that's what reproduces the scale of the
-  # original CV z-scores, but I've no idea why this is needed...
+  motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))
   
   # observed motif sums (M x S)
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))

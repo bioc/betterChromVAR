@@ -185,7 +185,7 @@ addGCBias <- function(object, genome){
   object
 }
 
-.groupingInput <- function(grouping, object, fillNULL=TRUE){
+.groupingInput <- function(grouping, object, fillNULL=FALSE){
   if(is.null(grouping)) return(grouping)
   if(is.null(grouping)){
     if(fillNULL){
