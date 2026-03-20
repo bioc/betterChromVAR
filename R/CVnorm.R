@@ -42,6 +42,7 @@
 #'   the object is returned with an extra assay named based on `toAssay`.
 #'   
 #' @importFrom SummarizedExperiment assay<- assayNames
+#' @importFrom GenomicRanges width
 #' @export
 #' @examples
 #' counts_se <- getDummyData()$counts

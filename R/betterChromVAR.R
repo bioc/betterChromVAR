@@ -4,7 +4,8 @@
 #' additionally enabling balanced expectations and bias shrinkage.
 #' 
 #' @param object A SummarizedExperiment (or SingleCellExperiment) with an assay
-#'    'counts', or a count (sparse) matrix.
+#'    'counts', or a count (sparse) matrix. (Note that the regions should have
+#'    similar widths.)
 #' @param annotations Peak annotation (sparse) matrix, with motifs as columns,
 #'    or a SummarizedExperiment containing this in the first assay. Values 
 #'    should be either logical or between 0 and 1.
@@ -49,6 +50,7 @@
 #' @importFrom S4Vectors metadata
 #' @importFrom Matrix crossprod sparseMatrix kronecker Diagonal cbind2 colSums
 #' @importFrom BiocParallel bplapply SerialParam MulticoreParam bpnworkers
+#' @importFrom stats p.adjust pchisq
 #' @export
 #' @examples
 #' attach(getDummyData())
@@ -104,9 +106,9 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   ngroups <- length(levels(grouping))
                     
   if(is.null(nthreads)){
-    BPPARAM <- SerialParam(progress=(verbose && ngroups>1))
+    BPPARAM <- SerialParam(progressbar=(verbose && ngroups>1))
   }else if(is.integer(nthreads) && length(nthreads)==1 && nthreads>0L){
-    BPPARAM <- MulticoreParam(nthreads, progress=verbose)
+    BPPARAM <- MulticoreParam(nthreads, progressbar=verbose)
   }else{
     if(!inherits(nthreads, "BiocParallelParam"))
       stop("`nthreads` should either be a positive integer, or a ",

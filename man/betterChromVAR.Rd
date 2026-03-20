@@ -20,7 +20,8 @@ betterChromVAR(
 }
 \arguments{
 \item{object}{A SummarizedExperiment (or SingleCellExperiment) with an assay
-'counts', or a count (sparse) matrix.}
+'counts', or a count (sparse) matrix. (Note that the regions should have
+similar widths.)}
 
 \item{annotations}{Peak annotation (sparse) matrix, with motifs as columns,
 or a SummarizedExperiment containing this in the first assay. Values

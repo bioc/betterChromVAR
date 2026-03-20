@@ -134,6 +134,7 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
 #' @importFrom Matrix Matrix
 #' @importFrom stats rnorm rnbinom
 #' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
 #' @export
 #'
 #' @examples
@@ -184,7 +185,15 @@ addGCBias <- function(object, genome){
   object
 }
 
-.groupingInput <- function(grouping, object){
+.groupingInput <- function(grouping, object, fillNULL=TRUE){
+  if(is.null(grouping)) return(grouping)
+  if(is.null(grouping)){
+    if(fillNULL){
+      grouping <- rep(factor("all"), ncol(object))
+    }else{
+      return(NULL)
+    }
+  }
   if(is.character(grouping) && length(grouping)==1 && 
      inherits(object, "SummarizedExperiment") &&
      grouping %in% colnames(colData(object))){
