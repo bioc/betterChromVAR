@@ -100,16 +100,18 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   }
 
   if(is.null(grouping)) grouping <- rep(factor("all"), ncol(object))
-  grouping <- .groupingInput(grouping)
+  grouping <- .groupingInput(grouping, object)
   ngroups <- length(levels(grouping))
                     
   if(is.null(nthreads)){
     BPPARAM <- SerialParam(progress=(verbose && ngroups>1))
   }else if(is.integer(nthreads) && length(nthreads)==1 && nthreads>0L){
     BPPARAM <- MulticoreParam(nthreads, progress=verbose)
-  }else if(!inherits(nthreads, "BiocParallelParam")){
-    stop("`nthreads` should either be a positive integer, or a ",
-         "BiocParallelParam object.")
+  }else{
+    if(!inherits(nthreads, "BiocParallelParam"))
+      stop("`nthreads` should either be a positive integer, or a ",
+           "BiocParallelParam object.")
+    BPPARAM <- nthreads
   }
   
   if(verbose) message("Preparing bias bins")

@@ -1,3 +1,4 @@
+library(BiocParallel)
 set.seed(123)
 attach(getDummyData())
 counts$groups <- factor(rep(LETTERS[1:2], each=5))
@@ -21,6 +22,13 @@ test_that("shrinkage works", {
   checkDevOutput(dev)
   dev <- betterChromVAR(counts, motifMatches, grouping=counts$groups,
                         shrinkage="smooth")
+})
+
+test_that("multithreading works", {
+  bp <- SnowParam(2)
+  dev <- betterChromVAR(counts, motifMatches, grouping=counts$groups,
+                        shrinkage="average", nthreads=bp)
+  checkDevOutput(dev)
 })
 
 test_that("CVnorm works", {

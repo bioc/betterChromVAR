@@ -36,6 +36,8 @@ from (bulk or single-cell) ATAC-seq data and motif annotations. The
 package also includes an ATAC-seq normalization method based on the
 general chromVAR logic.
 
+On a dataset of ~31k cells, ~150k regions, and ~2k motifs, the original chromVAR took 138min to run, the ArchR version 78min, while betterChromVAR ran in ~2min, with outputs correlating to the original by ~0.99.
+
 ## Installation instructions
 
 <!--
