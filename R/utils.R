@@ -145,7 +145,8 @@ getDummyData <- function(nRegions=500, nSamples=10, nMotifs=5){
   mu <- sample.int(100, nRegions, replace=TRUE)
   counts <- matrix(rnbinom(nRegions * nSamples, mu=rep(mu,nSamples), size=2),
                    nrow=nRegions, ncol=nSamples)
-
+  counts <- counts[which(rowSums(counts)>0),]
+  nRegions <- nrow(counts)
   colnames(counts) <- paste0("sample", seq_len(nSamples))
   gr <- GRanges("chr1", IRanges(seq_len(nRegions)*100, width=20))
   counts <- SummarizedExperiment(list(counts=counts), rowRanges=gr)
