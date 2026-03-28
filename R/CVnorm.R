@@ -1,4 +1,3 @@
-
 #' CVnorm: chromVAR-inspired ATAC-seq normalization
 #' 
 #' Corrects ATAC peak counts by removing the effects of technical biases 
@@ -13,7 +12,16 @@
 #' @param grouping Optional grouping for the baseline expectation (prevents 
 #'   bias toward more abundant groups).
 #' @param smoothGrouping Optional grouping to determine correction strength. 
-#'   If bias is consistent within these groups, correction is reduced.
+#'   If bias is consistent within these groups, correction is reduced. By 
+#'   default this is the same as `grouping`.
+#' @param shrinkMode The way to perform the group-based shrinkage. With 
+#'   `shrinkMode="dampen"` (default), no corrected is applied in bins when the 
+#'   bias is entirely explained by groups. `shrinkMode="qsmooth"` instead 
+#'   reproduces the logic of the `qsmooth` package: if variance in bias is 
+#'   chiefly explained by groups, between group bias will not be corrected, but
+#'   within-group differences will be. Using this prior to differential analysis
+#'   however leads to increase Type I error rate, and it should therefore not be
+#'   used for downstream application.
 #' @param toAssay The name of the assay in which to store the corrected data 
 #'   (default 'corrected'). Ignored unless `object` is a 
 #'   SummarizedExperiment-like object.
@@ -50,8 +58,8 @@
 #' # counts_se <- addGCBias(counts_se, genome=YOUR_GENOME)
 #' counts_se <- CVnorm(counts_se)
 CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping, 
-                   toAssay="corrected", bs=50, w=0.05, Z=FALSE, 
-                   useWidthAdj=NULL, enforceZeros=TRUE){
+                   shrinkMode=c("dampen", "qsmooth"), toAssay="corrected",
+                   bs=50, w=0.1, Z=FALSE, useWidthAdj=NULL, enforceZeros=TRUE){
   
   # input validity
   if(!isFALSE(useWidthAdj) && 
@@ -78,6 +86,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   stopifnot(!is.null(bias) && length(bias) == nrow(counts))
   grouping <- .groupingInput(grouping, object)
   smoothGrouping <- .groupingInput(smoothGrouping, object)
+  shrinkMode <- match.arg(shrinkMode)
 
   if(any(rowSums(counts)==0))
     stop("Some peaks have an expectation of zero, most likely because they ",
@@ -133,19 +142,21 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     MSW <- SSW / (ncol(counts) - n_groups)
     MSB <- SSB / (n_groups - 1)
     
-    # Weight: MSW / (MSW + MSB)
-    # If MSB is large, bias is consistent within groups -> weight -> 0
-    # If MSW is large, bias is noisy/sample-specific -> weight -> 1
     weights <- MSW / (MSW + MSB + 1e-12)
     
-    # Shrink the log-bias factors towards based on the weights
-    log_R_weighted <- log_R * weights
+    if(shrinkMode == "qsmooth"){
+      # Subtract the sample-specific noise (log_R - group_mean) 
+      # but keep the group-level bias (group_mean) multiplied by (1-w)
+      log_R_weighted <- log_R - (1 - weights) * group_means_mat
+    } else {
+      # Scale down the log-bias factors towards 0 based on the weights
+      log_R_weighted <- log_R * weights
+    }
     bias_factor <- exp(log_R_weighted)
   }
   
   # peak-level correction
-  peak_bias_factors <- bias_factor[bin_map, ]
-  expected_counts <- (peak_p %*% t(cs)) * peak_bias_factors
+  expected_counts <- (peak_p %*% t(cs)) * bias_factor[bin_map, ]
   
   if(isTRUE(Z)){
     # Pearson residuals

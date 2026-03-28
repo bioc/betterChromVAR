@@ -51,7 +51,7 @@ grouped, see \code{grouping}).}
 \code{shrinkage="smooth"}.}
 
 \item{nthreads}{Either an integer scalar indicating the number of threads to
-use, or a BiocParallelParam object. This is only used for subsets of the
+use, or a \code{BiocParallelParam} object. This is only used for subsets of the
 steps.}
 
 \item{w}{Standard deviation of the Gaussian kernel. Values close to zero will
@@ -64,7 +64,7 @@ below 0.2 are recommended.}
 \item{dev2global}{Logical; whether the adjusted deviations should be relative
 to the global expectation (default TRUE), which replicates the original
 chromVAR. Otherwise the deviations are relative to the background
-expecation.}
+expectation of the cell/sample.}
 
 \item{shrinkage}{The method to use to shrink background (i.e. bias) bin
 frequencies. Either "average" (shrinks to the bin's average across
@@ -76,7 +76,7 @@ A SummarizedExperiment containing the adjusted deviations and
 z-scores for each motif/sample.
 }
 \description{
-A fast, analytic implementation of chromVAR's computeDeviations,
+A fast, analytic implementation of \code{chromVAR}'s \code{computeDeviations},
 additionally enabling balanced expectations and bias shrinkage.
 }
 \examples{

@@ -9,9 +9,10 @@ CVnorm(
   bias = NULL,
   grouping = NULL,
   smoothGrouping = grouping,
+  shrinkMode = c("dampen", "qsmooth"),
   toAssay = "corrected",
   bs = 50,
-  w = 0.05,
+  w = 0.1,
   Z = FALSE,
   useWidthAdj = NULL,
   enforceZeros = TRUE
@@ -28,7 +29,17 @@ from \code{rowData(object)$bias}.}
 bias toward more abundant groups).}
 
 \item{smoothGrouping}{Optional grouping to determine correction strength.
-If bias is consistent within these groups, correction is reduced.}
+If bias is consistent within these groups, correction is reduced. By
+default this is the same as \code{grouping}.}
+
+\item{shrinkMode}{The way to perform the group-based shrinkage. With
+\code{shrinkMode="dampen"} (default), no corrected is applied in bins when the
+bias is entirely explained by groups. \code{shrinkMode="qsmooth"} instead
+reproduces the logic of the \code{qsmooth} package: if variance in bias is
+chiefly explained by groups, between group bias will not be corrected, but
+within-group differences will be. Using this prior to differential analysis
+however leads to increase Type I error rate, and it should therefore not be
+used for downstream application.}
 
 \item{toAssay}{The name of the assay in which to store the corrected data
 (default 'corrected'). Ignored unless \code{object} is a
