@@ -7,13 +7,14 @@
 addGCBias(object, genome)
 }
 \arguments{
-\item{object}{An object inheriting RangedSummarizedExperiment.}
+\item{object}{An object inheriting RangedSummarizedExperiment or GRanges.}
 
 \item{genome}{A BSgenome object or any other genome object supported by
 \code{\link[Biostrings]{getSeq}}.}
 }
 \value{
-\code{object} with the GC content in \code{rowData(object)$bias}.
+\code{object} with the GC content in \code{mcols(object)$bias} (if GRanges)
+or \code{rowData(object)$bias}.
 }
 \description{
 Add the \code{bias} column to the object's rowData, containing the regions'

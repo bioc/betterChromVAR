@@ -163,26 +163,30 @@ getDummyData <- function(nRegions=500, nSamples=10, nMotifs=5){
 #' Add the `bias` column to the object's rowData, containing the regions' 
 #' proportion of Gs and Cs.
 #'
-#' @param object An object inheriting RangedSummarizedExperiment.
+#' @param object An object inheriting RangedSummarizedExperiment or GRanges.
 #' @param genome A BSgenome object or any other genome object supported by 
 #'   \code{\link[Biostrings]{getSeq}}.
 #'
-#' @returns `object` with the GC content in `rowData(object)$bias`.
+#' @returns `object` with the GC content in `mcols(object)$bias` (if GRanges) 
+#'   or `rowData(object)$bias`.
 #' @importFrom Biostrings getSeq letterFrequency
-#' @importFrom SummarizedExperiment rowRanges rowData<- 
+#' @importFrom SummarizedExperiment rowRanges rowData<- mcols<-
 #' @export
 #'
 #' @examples
 #' # not run:
 #' # se <- addGCBias(se, genome)
 addGCBias <- function(object, genome){
-  stopifnot(inherits(object, "SummarizedExperiment"))
-  stopifnot(!is.null(rowRanges(object)))
-  seqs <- Biostrings::getSeq(x=genome, rowRanges(object))
+  if(inherits(object, "SummarizedExperiment")){
+    stopifnot(!is.null(rowRanges(object)))
+    rowRanges(object) <- addGCBias(rowRanges(object), genome)
+    return(object)
+  }
+  seqs <- Biostrings::getSeq(x=genome, object)
   # same as chromVAR:
   nucfreqs <- letterFrequency(seqs, c("A", "C", "G", "T"))
   gc <- rowSums(nucfreqs[, 2:3]) / rowSums(nucfreqs)
-  rowData(object)$bias <- gc
+  mcols(object)$bias <- gc
   object
 }
 
