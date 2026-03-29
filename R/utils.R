@@ -130,7 +130,8 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
 #' @param nSamples Number of samples to generate
 #' @param nMotifs Number of motifs to generate
 #'
-#' @returns A list with the slots `counts` and `matches`
+#' @returns A list with the slots `counts` (a peak counts SummarizedExperiment)
+#'   and `matches` (a sparse matrix of binary motif matches per peaks)
 #' @importFrom Matrix Matrix
 #' @importFrom stats rnorm rnbinom
 #' @importFrom GenomicRanges GRanges

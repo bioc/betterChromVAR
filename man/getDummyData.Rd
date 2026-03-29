@@ -14,7 +14,8 @@ getDummyData(nRegions = 500, nSamples = 10, nMotifs = 5)
 \item{nMotifs}{Number of motifs to generate}
 }
 \value{
-A list with the slots \code{counts} and \code{matches}
+A list with the slots \code{counts} (a peak counts SummarizedExperiment)
+and \code{matches} (a sparse matrix of binary motif matches per peaks)
 }
 \description{
 Dummy data for testing purposes
