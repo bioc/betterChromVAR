@@ -103,7 +103,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   
   stopifnot(!is.null(bias) && length(bias)==nrow(object))
   
-  if(!is(counts, "matrix") && !inherits(counts, "sparseMatrix"))
+  if(!is(counts, "matrix") && !inherits(counts, "Matrix"))
     stop("`object` should be a SummarizedExperiment or SingleCellExperiment,",
          " or a (sparse) matrix of counts.")
   

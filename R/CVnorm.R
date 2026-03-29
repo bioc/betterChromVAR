@@ -167,6 +167,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     if(inherits(out, "sparseMatrix")){
       out@x[out@x < 0] <- 0
     }else{
+      out <- as.matrix(out)
       out[out<0] <- 0
     }
     if(isTRUE(enforceZeros)){
