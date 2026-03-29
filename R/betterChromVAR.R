@@ -21,16 +21,15 @@
 #' @param w Standard deviation of the Gaussian kernel. Values close to zero will
 #'   effectively mean that only peaks from the same bins are used as background,
 #'   which is suboptimal if the bin is sparsely populated. High values (e.g. >1)
-#'   will lead to homogeneous sampling, which will fail to correct for bias.
-#'   A value of 0.05 will be highly similar to the original chromVAR, and values
-#'   below 0.2 are recommended.
+#'   will lead to homogeneous sampling, which will fail to correct for bias. 
+#'   Values below 0.2 are recommended.
 #' @param bs Number of bins per dimension (total bins = `bs^2`).
 #' @param sigma Sigma parameter for the 2D smoothing. Ignored unless 
 #'   `shrinkage="smooth"`.
 #' @param shrinkage The method to use to shrink background (i.e. bias) bin 
-#'   frequencies. Either "average" (shrinks to the bin's average across 
+#'   frequencies. Either "average" (shrinks towards the bin's average across 
 #'   cells/samples of the same group), "smooth" (per-sample 2D smoothing over
-#'   the bin matrix), or "none" (default).
+#'   the bin matrix, somewhat redundant with `w`), or "none" (default).
 #' @param expectation Optional vector of length equal to `nrow(object)` 
 #'   giving the expected counts. If NULL, defaults to mean counts (eventually
 #'   grouped, see `grouping`).
@@ -38,6 +37,12 @@
 #'   to the global expectation (default TRUE), which replicates the original 
 #'   chromVAR. Otherwise the deviations are relative to the background 
 #'   expectation of the cell/sample.
+#' @param intern An optional named list (with slots E, V, bg, and bc) passing
+#'   pre-computed internal values. Alternatively, if `intern=TRUE`, the 
+#'   function will return such a list with internal values. This parameter is 
+#'   there to enable more efficient programmatic use of the deviance 
+#'   computation, and should not be used unless you really know what you're 
+#'   doing.
 #' @param nthreads Either an integer scalar indicating the number of threads to
 #'   use, or a `BiocParallelParam` object. This is only used for subsets of the 
 #'   steps.
@@ -64,14 +69,19 @@
 #' dev
 betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL, 
                            expectation=NULL, verbose=FALSE, bs=50, sigma=1,
-                           nthreads=NULL, w=0.1, dev2global=TRUE,
+                           nthreads=NULL, w=0.1, dev2global=TRUE, intern=NULL,
                            shrinkage=c("none", "average", "smooth")){
   
   # Check input validity
   shrinkage <- match.arg(shrinkage)
   stopifnot(nrow(object) == nrow(annotations))
   stopifnot(is.null(expectation) || length(expectation)==nrow(object))
-  
+  if(!is.null(intern)){
+    if(shrinkage!="none")
+      stop("Shrinkage not possible when providing internal values.")
+    if(!isTRUE(intern))
+      stopifnot(is.list(intern) && all(c("E","V","bg","bc") %in% names(intern)))
+  }
   motifCD <- NULL
   if( inherits(annotations, "SummarizedExperiment") ){
     motifCD <- colData(annotations)
@@ -123,7 +133,11 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   if(verbose) message("Preparing bias bins")
   
   # get background bins (B)
-  background <- getBackgroundBins(expectation, bias = bias, w = w, bs = bs)
+  if(!is.null(intern) && !isTRUE(intern)){
+    background <- intern$bg
+  }else{
+    background <- getBackgroundBins(expectation, bias = bias, w = w, bs = bs)
+  }
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs
   
@@ -162,7 +176,6 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   
   if(verbose) message("Computing deviations")
   
-  
   # bin-level expectations and variances (B x S)
   i <- seq_len(ncol(counts))
   if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 & ncol(counts>5000)){
@@ -170,17 +183,30 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
       binCounts2 <- NULL
       if(shrinkage!="none") binCounts2 <- binCounts[,i]
+      intern2 <- NULL
+      if(!is.null(intern) && !isTRUE(intern))
+        intern2 <- lapply(c("bc","E","V"), function(x) intern[[x]][,i])
       .getDeviations(binBinProbs, annotations, binCounts2, counts[,i],
                      bin2peakMat, background$binDensity,
-                     expectation=expectation)
+                     expectation=expectation, intern=intern2)
     })
-    res <- list(deviations=Reduce(cbind2,
-                                  lapply(res, function(x) x$deviations)),
-                z=Reduce(cbind2, lapply(res, function(x) x$z)))
+    if(isTRUE(intern)){
+      res <- lapply(c(bc="bc",E="E",V="V"), function(x){
+        Reduce(cbind2, lapply(res, function(y) y[[x]]))
+      })
+    }else{
+      res <- list(deviations=Reduce(cbind2,
+                                    lapply(res, function(x) x$deviations)),
+                  z=Reduce(cbind2, lapply(res, function(x) x$z)))
+    }
   }else{
     res <- .getDeviations(binBinProbs, annotations, binCounts, counts, 
                           bin2peakMat, background$binDensity,
-                          expectation=expectation)
+                          expectation=expectation, intern)
+  }
+  if(isTRUE(intern)){
+    res$bg <- background
+    return(res)
   }
   
   sd_deviations <- matrixStats::rowSds(res$z, na.rm=TRUE)
@@ -201,17 +227,27 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
 }
 
 .getDeviations <- function(binBinProbs, annotations, binCounts=NULL, 
-                           counts, bin2peakMat, binDensity, expectation=NULL){
+                           counts, bin2peakMat, binDensity, expectation=NULL,
+                           intern=NULL){
   
-  if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
-  
-  # bin-level expectations and variances (B x S)
-  E <- binBinProbs %*% binCounts
-  V <- as.matrix( ((bin2peakMat %*% (counts^2))/pmax(1, binDensity))-
-                    ((E/pmax(1, binDensity))^2) )
-  V[V < 0] <- 0
-  V <- binBinProbs %*% (V * binDensity)
-  
+  if(!is.null(intern) && !isTRUE(intern) && 
+     all(c("E","V","bg","bc") %in% names(intern))){
+    binCounts <- intern$bc
+    E <- intern$E
+    V <- intern$V
+  }else{
+    if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
+    
+    # bin-level expectations and variances (B x S)
+    E <- binBinProbs %*% binCounts
+    V <- as.matrix( ((bin2peakMat %*% (counts^2))/pmax(1, binDensity))-
+                      ((E/pmax(1, binDensity))^2) )
+    V[V < 0] <- 0
+    V <- binBinProbs %*% (V * binDensity)
+    
+    if(isTRUE(intern)) return(list(E=E, V=V, bc=binCounts))
+  }
+
   # motif-level background stats (M x S)
   motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   motif_bg_exp <- as.matrix(motifBinCounts %*% E)
