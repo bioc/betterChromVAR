@@ -39,10 +39,9 @@
 #'   expectation of the cell/sample.
 #' @param intern An optional named list (with slots E, V, bg, and bc) passing
 #'   pre-computed internal values. Alternatively, if `intern=TRUE`, the 
-#'   function will return such a list with internal values. This parameter is 
-#'   there to enable more efficient programmatic use of the deviance 
-#'   computation, and should not be used unless you really know what you're 
-#'   doing.
+#'   function will return such a list with internal values. This parameter can 
+#'   be used to pre-compute expensive steps and speed up analyses using the same
+#'   object with different `annotation`.
 #' @param nthreads Either an integer scalar indicating the number of threads to
 #'   use, or a `BiocParallelParam` object. This is only used for subsets of the 
 #'   steps.
@@ -76,11 +75,13 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   shrinkage <- match.arg(shrinkage)
   stopifnot(nrow(object) == nrow(annotations))
   stopifnot(is.null(expectation) || length(expectation)==nrow(object))
-  if(!is.null(intern)){
+  if(!is.null(intern) && !isTRUE(intern)){
     if(shrinkage!="none")
       stop("Shrinkage not possible when providing internal values.")
-    if(!isTRUE(intern))
-      stopifnot(is.list(intern) && all(c("E","V","bg","bc") %in% names(intern)))
+    stopifnot(is.list(intern) && all(c("E","V","bg","bc") %in% names(intern)))
+    stopifnot(all(c(ncol(intern$bc), ncol(intern$E), ncol(intern$V)) == 
+                    ncol(object)))
+    stopifnot(all(c(nrow(intern$E),nrow(intern$V),nrow(intern$bc))==(bs^2)))
   }
   motifCD <- NULL
   if( inherits(annotations, "SummarizedExperiment") ){
@@ -130,12 +131,11 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     BPPARAM <- nthreads
   }
   
-  if(verbose) message("Preparing bias bins")
-  
   # get background bins (B)
   if(!is.null(intern) && !isTRUE(intern)){
     background <- intern$bg
   }else{
+    if(verbose) message("Preparing bias bins")
     background <- getBackgroundBins(expectation, bias = bias, w = w, bs = bs)
   }
   bin_map <- background$peak2bin

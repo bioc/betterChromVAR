@@ -68,10 +68,9 @@ expectation of the cell/sample.}
 
 \item{intern}{An optional named list (with slots E, V, bg, and bc) passing
 pre-computed internal values. Alternatively, if \code{intern=TRUE}, the
-function will return such a list with internal values. This parameter is
-there to enable more efficient programmatic use of the deviance
-computation, and should not be used unless you really know what you're
-doing.}
+function will return such a list with internal values. This parameter can
+be used to pre-compute expensive steps and speed up analyses using the same
+object with different \code{annotation}.}
 
 \item{shrinkage}{The method to use to shrink background (i.e. bias) bin
 frequencies. Either "average" (shrinks towards the bin's average across
