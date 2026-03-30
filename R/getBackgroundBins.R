@@ -19,6 +19,7 @@
 #'   
 #' @importFrom stats cov dnorm dist
 #' @importFrom SummarizedExperiment assay rowData
+#' @importFrom matrixStats rowMins rowMaxs
 #' @importFrom methods as is
 #' @export
 #' @examples
@@ -40,8 +41,8 @@ getBackgroundBins <- function(x, bias=NULL, w=0.1, bs=50, pseudo=0){
   transMat <- t(forwardsolve(t(chol(cv)), t(norm_mat)))
   
   # Calculate min/max for the bin boundaries
-  minCoords <- c(min(transMat[,1]), min(transMat[,2]))
-  maxCoords <- c(max(transMat[,1]), max(transMat[,2]))
+  minCoords <- rowMins(transMat)
+  maxCoords <- rowMaxs(transMat)
   range_coords <- maxCoords - minCoords
   
   # Map peak coordinates to bins

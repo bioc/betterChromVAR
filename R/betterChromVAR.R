@@ -59,6 +59,7 @@
 #' @importFrom Matrix crossprod sparseMatrix kronecker Diagonal cbind2 colSums
 #' @importFrom BiocParallel bplapply SerialParam MulticoreParam bpnworkers
 #' @importFrom stats p.adjust pchisq
+#' @importFrom matrixStats rowSds
 #' @export
 #' @examples
 #' attach(getDummyData())
@@ -209,7 +210,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     return(res)
   }
   
-  sd_deviations <- matrixStats::rowSds(res$z, na.rm=TRUE)
+  sd_deviations <- rowSds(res$z, na.rm=TRUE)
   # copied from chromVAR:
   p_sd <- pchisq((ncol(counts) - 1) * (sd_deviations^2),
                  df=(ncol(counts)-1), lower.tail = FALSE)

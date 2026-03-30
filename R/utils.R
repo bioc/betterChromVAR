@@ -171,7 +171,7 @@ getDummyData <- function(nRegions=500, nSamples=10, nMotifs=5){
 #' @returns `object` with the GC content in `mcols(object)$bias` (if GRanges) 
 #'   or `rowData(object)$bias`.
 #' @importFrom Biostrings getSeq letterFrequency
-#' @importFrom SummarizedExperiment rowRanges rowData<- mcols<-
+#' @importFrom SummarizedExperiment rowRanges rowRanges<- mcols mcols<-
 #' @export
 #'
 #' @examples
