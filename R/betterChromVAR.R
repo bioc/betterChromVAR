@@ -96,6 +96,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
   if( inherits(object, "SummarizedExperiment") || 
       inherits(object, "SingleCellExperiment") ){
     if(is.null(bias)) bias <- rowData(object)$bias
+    flbias <- rowData(object)$flbias
     counts <- assay(object, "counts")
   }else{
     object <- SummarizedExperiment(list(counts=object))
@@ -137,8 +138,8 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     background <- intern$bg
   }else{
     if(verbose) message("Preparing bias bins")
-    background <- getBackgroundBins(expectation, bias=bias, w=w, bs=bs,
-                                    verbose=verbose)
+    background <- getBackgroundBins(expectation, bias=bias, flbias=flbias, 
+                                    w=w, bs=bs, verbose=verbose)
   }
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs
