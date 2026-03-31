@@ -4,16 +4,27 @@
 \alias{getBackgroundBins}
 \title{getBackgroundBins}
 \usage{
-getBackgroundBins(x, bias = NULL, w = 0.1, bs = 50, pseudo = 0)
+getBackgroundBins(
+  x,
+  bias = NULL,
+  flbias = NULL,
+  w = 0.1,
+  bs = NULL,
+  pseudo = 0
+)
 }
 \arguments{
-\item{x}{A chromVAR counts object}
+\item{x}{A SummarizedExperiment containing a 'counts' assay, or a matrix of
+counts.}
 
-\item{bias}{Vector of GCBias (default from object)}
+\item{bias}{Vector of GC bias (by default obtained from the object).}
+
+\item{flbias}{Vector of fragment length bias (by default obtained from the
+object). Not currently supported.}
 
 \item{w}{Standard deviation of the Gaussian kernel)}
 
-\item{bs}{Number of bins per dimension (total bins = bs^2)}
+\item{bs}{Number of bins per dimension.}
 
 \item{pseudo}{Optional pseudocount to be added. This should not be needed
 with standard workflows.}
