@@ -1,6 +1,7 @@
 #' getBackgroundBins
 #' 
-#' Get chromVAR-like bin-bin background selection probabilities
+#' Computes chromVAR-like background (i.e. bias) bins, as well as bin-to-bin 
+#' selection probabilities needed for \code{\link{betterChromVAR}}.
 #' 
 #' @param x A SummarizedExperiment containing a 'counts' assay, or a matrix of
 #'   counts.
@@ -8,9 +9,27 @@
 #' @param flbias Vector of fragment length bias (by default obtained from the 
 #'   object). Not currently supported.
 #' @param w Standard deviation of the Gaussian kernel)
-#' @param bs Number of bins per dimension.
+#' @param bs Number of bins per dimension. This can be a single integer (total
+#'   bins = `bs^2`), or an integer vector of length 2 (if `flbias=NULL`) or 3 
+#'   (in which case there are `prod(bs)` total bins). The values specify the 
+#'   number of bins for, in order: enrichment, GC and fragment length. By 
+#'   default, `bs=50` if `flbias` is not provided (mimicking chromVAR), and
+#'   `bs=c(30, 30, 6)` if it is.
 #' @param pseudo Optional pseudocount to be added. This should not be needed 
 #'   with standard workflows.
+#' @param verbose Whether to print processing infos.
+#' 
+#' @details
+#' The procedure underlying this function is the same as in 
+#' `chromVAR::getBackgroundPeaks`, with the following differences:
+#' * Rather than producing a set of background peaks for each input peak, the 
+#'   function returns peak-to-bin mappings and bin-to-bin background selection
+#'   probabilities, which enables an analytic background computation. It is, as
+#'   such, entirely deterministic.
+#' * The function supports the optional use of a third bias dimension, provided
+#'   through the `flbias` argument, meant for fragment length bias (we 
+#'   recommend the use of the log10-transformed median length of fragments 
+#'   overlapping each region). This is still an experimental feature.
 #' 
 #' @return a list with the slots `peak2bin` (which bin each peak belongs to), 
 #'   `binDensity` and `binBinProbs` (the probability of a peak from a given bin 
@@ -40,7 +59,6 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   }else if(is.matrix(x) || is(x, "Matrix")){
     x <- rowSums(x)
   }
-  flbias <- NULL # not yet ready
   stopifnot(length(bias)==nrow(x))
   
   if(!is.null(flbias)){

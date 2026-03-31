@@ -25,10 +25,17 @@ object). Not currently supported.}
 
 \item{w}{Standard deviation of the Gaussian kernel)}
 
-\item{bs}{Number of bins per dimension.}
+\item{bs}{Number of bins per dimension. This can be a single integer (total
+bins = \code{bs^2}), or an integer vector of length 2 (if \code{flbias=NULL}) or 3
+(in which case there are \code{prod(bs)} total bins). The values specify the
+number of bins for, in order: enrichment, GC and fragment length. By
+default, \code{bs=50} if \code{flbias} is not provided (mimicking chromVAR), and
+\code{bs=c(30, 30, 6)} if it is.}
 
 \item{pseudo}{Optional pseudocount to be added. This should not be needed
 with standard workflows.}
+
+\item{verbose}{Whether to print processing infos.}
 }
 \value{
 a list with the slots \code{peak2bin} (which bin each peak belongs to),
@@ -36,7 +43,22 @@ a list with the slots \code{peak2bin} (which bin each peak belongs to),
 being selected as background for another).
 }
 \description{
-Get chromVAR-like bin-bin background selection probabilities
+Computes chromVAR-like background (i.e. bias) bins, as well as bin-to-bin
+selection probabilities needed for \code{\link{betterChromVAR}}.
+}
+\details{
+The procedure underlying this function is the same as in
+\code{chromVAR::getBackgroundPeaks}, with the following differences:
+\itemize{
+\item Rather than producing a set of background peaks for each input peak, the
+function returns peak-to-bin mappings and bin-to-bin background selection
+probabilities, which enables an analytic background computation. It is, as
+such, entirely deterministic.
+\item The function supports the optional use of a third bias dimension, provided
+through the \code{flbias} argument, meant for fragment length bias (we
+recommend the use of the log10-transformed median length of fragments
+overlapping each region). This is still an experimental feature.
+}
 }
 \examples{
 counts_se <- getDummyData()$counts
