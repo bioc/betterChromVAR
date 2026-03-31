@@ -72,7 +72,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   if (inherits(object, "SummarizedExperiment") || 
       inherits(object, "SingleCellExperiment")) {
     if(is.null(bias)) bias <- rowData(object)$bias
-    flbias <- rowData(object)$bias
+    flbias <- rowData(object)$flbias
     if(is.null(useWidthAdj)){
       wi <- width(object)
       useWidthAdj <- (mean(abs(wi-median(wi)))/median(wi)) > 0.1
