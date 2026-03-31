@@ -82,8 +82,21 @@ A SummarizedExperiment containing the adjusted deviations and
 z-scores for each motif/sample.
 }
 \description{
-A fast, analytic implementation of \code{chromVAR}'s \code{computeDeviations},
-additionally enabling balanced expectations and bias shrinkage.
+A fast, analytic implementation of \code{chromVAR}'s \code{computeDeviations}, with
+additional features.
+}
+\details{
+Contrarily to the original chromVAR, this function is entirely deterministic,
+and achieves higher precision and much higher efficiency through two changes:
+\enumerate{
+\item working with expected background sampling mean and variances, rather than
+actual permutations, and 2) computing expectations and variance at the level
+of bias bins, instead of in the peak-space. The function additionally
+includes experimental bias shrinkage options, the possibility to handle
+annotations that are not binary (e.g. probability scores) and a third
+bias dimension (fragment length bias, which should be stored in
+\code{rowData(object)$flbias} see \code{\link{getBackgroundBins}} for details).
+}
 }
 \examples{
 attach(getDummyData())
