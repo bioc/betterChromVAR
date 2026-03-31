@@ -23,7 +23,7 @@
 #'   which is suboptimal if the bin is sparsely populated. High values (e.g. >1)
 #'   will lead to homogeneous sampling, which will fail to correct for bias. 
 #'   Values below 0.2 are recommended.
-#' @param bs Number of bins per dimension (total bins = `bs^2`).
+#' @param bs Number of bins per dimension (see \code{\link{getBackgroundBins}}).
 #' @param sigma Sigma parameter for the 2D smoothing. Ignored unless 
 #'   `shrinkage="smooth"`.
 #' @param shrinkage The method to use to shrink background (i.e. bias) bin 
@@ -68,7 +68,7 @@
 #' dev <- betterChromVAR(counts, motifMatches)
 #' dev
 betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL, 
-                           expectation=NULL, verbose=FALSE, bs=50, sigma=1,
+                           expectation=NULL, verbose=FALSE, bs=NULL, sigma=1,
                            nthreads=NULL, w=0.1, dev2global=TRUE, intern=NULL,
                            shrinkage=c("none", "average", "smooth")){
   
@@ -137,7 +137,8 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     background <- intern$bg
   }else{
     if(verbose) message("Preparing bias bins")
-    background <- getBackgroundBins(expectation, bias = bias, w = w, bs = bs)
+    background <- getBackgroundBins(expectation, bias=bias, w=w, bs=bs,
+                                    verbose=verbose)
   }
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs

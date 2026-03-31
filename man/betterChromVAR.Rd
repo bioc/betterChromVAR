@@ -11,7 +11,7 @@ betterChromVAR(
   bias = NULL,
   expectation = NULL,
   verbose = FALSE,
-  bs = 50,
+  bs = NULL,
   sigma = 1,
   nthreads = NULL,
   w = 0.1,
@@ -46,7 +46,7 @@ grouped, see \code{grouping}).}
 
 \item{verbose}{Logical; whether to output progress messages (default FALSE).}
 
-\item{bs}{Number of bins per dimension (total bins = \code{bs^2}).}
+\item{bs}{Number of bins per dimension (see \code{\link{getBackgroundBins}}).}
 
 \item{sigma}{Sigma parameter for the 2D smoothing. Ignored unless
 \code{shrinkage="smooth"}.}

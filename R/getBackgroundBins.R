@@ -29,7 +29,7 @@
 #' counts_se <- getDummyData()$counts
 #' background <- getBackgroundBins(counts_se)
 getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
-                              pseudo=0){
+                              pseudo=0, verbose=TRUE){
   if (inherits(x, "SummarizedExperiment") || 
       inherits(x, "SingleCellExperiment")) {
     if(is.null(bias)) bias <- rowData(x)$bias
@@ -37,8 +37,10 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
     x <- rowSums(assay(x, "counts"))
   }else if(is.null(bias)){
     stopifnot("`bias` not provided, and not found in the object.")
+  }else if(is.matrix(x) || is(x, "Matrix")){
+    x <- rowSums(x)
   }
-  flbias <- NULL # disable; not currently implemented
+  flbias <- NULL # not yet ready
   stopifnot(length(bias)==nrow(x))
   
   if(!is.null(flbias)){
@@ -46,11 +48,15 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
     stopifnot(length(bs)==3)
     stopifnot(length(flbias)==length(bias))
   }else{
+    if(is.null(bs)) bs <- 50
     if(length(bs)==1) bs <- c(bs,bs)
     stopifnot(length(bs)==2)
   }
   bs <- as.integer(bs)
   stopifnot(all(bs>=1))
+  if(verbose) 
+    message("Creating ", paste(bs,collapse="*"),"=",prod(bs)," bias bins ",
+            "and computing their sampling distances")
   
   # Mahalanobis transformation
   norm_mat <- cbind(log10(x+pseudo), bias)
@@ -80,22 +86,21 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   }
   
   # Linearize index
-  
-  peak2bin <- idx1 + (idx[, 2] - 1) * bs[1]
+  peak2bin <- idx1 + (idx2 - 1) * bs[1]
   if(!is.null(flbias)){
-    peak2bin <- peak2bin  + (idx[, 3] - 1) * (bs[1] * bs[2])
+    peak2bin <- peak2bin  + (idx3 - 1) * (bs[1] * bs[2])
   }
   
   binDensity <- tabulate(peak2bin, nbins = prod(bs))
   
   # bin center grid (for distance calculation)
-  bins1 <- seq(minCoords[1], maxCoords[1], length.out = bs)
-  bins2 <- seq(minCoords[2], maxCoords[2], length.out = bs)
-  bin_data <- expand.grid(bins1, bins2)
-  
+  grid_args <- lapply(seq_along(minCoords), function(i) {
+    seq(minCoords[i], maxCoords[i], length.out = bs[i])
+  })
+  bin_data <- do.call(expand.grid, grid_args)
+
   # bin-to-bin probability matrix
-  bin_dist <- dist(bin_data)
-  W <- dnorm(as.matrix(bin_dist), 0, w)
+  W <- dnorm(as.matrix(dist(bin_data)), 0, w)
   
   normalizer <- as.vector(W %*% binDensity)
   # Avoid division by zero for empty regions
@@ -108,7 +113,6 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
     
   return(list(
     peak2bin = peak2bin,
-    #binBinDist = bin_dist,
     binDensity = binDensity,
     binBinProbs = binBinProbs
   ))

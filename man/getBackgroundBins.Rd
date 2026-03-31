@@ -10,7 +10,8 @@ getBackgroundBins(
   flbias = NULL,
   w = 0.1,
   bs = NULL,
-  pseudo = 0
+  pseudo = 0,
+  verbose = TRUE
 )
 }
 \arguments{

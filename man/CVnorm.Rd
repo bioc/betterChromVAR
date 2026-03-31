@@ -11,7 +11,7 @@ CVnorm(
   smoothGrouping = grouping,
   shrinkMode = c("dampen", "qsmooth"),
   toAssay = "corrected",
-  bs = 50,
+  bs = NULL,
   w = 0.1,
   Z = FALSE,
   useWidthAdj = NULL,
@@ -45,7 +45,7 @@ used for downstream application.}
 (default 'corrected'). Ignored unless \code{object} is a
 SummarizedExperiment-like object.}
 
-\item{bs}{Number of bins per dimension (total bins = \code{bs^2}).}
+\item{bs}{Number of bins per dimension (see \code{\link{getBackgroundBins}}).}
 
 \item{w}{Standard deviation of the Gaussian kernel for bin smoothing.}
 

@@ -25,7 +25,7 @@
 #' @param toAssay The name of the assay in which to store the corrected data 
 #'   (default 'corrected'). Ignored unless `object` is a 
 #'   SummarizedExperiment-like object.
-#' @param bs Number of bins per dimension (total bins = `bs^2`).
+#' @param bs Number of bins per dimension (see \code{\link{getBackgroundBins}}).
 #' @param w Standard deviation of the Gaussian kernel for bin smoothing.
 #' @param Z Logical; whether to return standardized residuals (Z-scores) 
 #'   instead of the (default) corrected counts.
@@ -59,7 +59,8 @@
 #' counts_se <- CVnorm(counts_se)
 CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping, 
                    shrinkMode=c("dampen", "qsmooth"), toAssay="corrected",
-                   bs=50, w=0.1, Z=FALSE, useWidthAdj=NULL, enforceZeros=TRUE){
+                   bs=NULL, w=0.1, Z=FALSE, useWidthAdj=NULL,
+                   enforceZeros=TRUE){
   
   # input validity
   if(!isFALSE(useWidthAdj) && 
@@ -67,10 +68,11 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     stop("The object does not contain rowRanges.",
          "Either include them, or set `useWidthAdj=FALSE`.")
 
-  wi <- NULL  
+  flbias <- wi <- NULL  
   if (inherits(object, "SummarizedExperiment") || 
       inherits(object, "SingleCellExperiment")) {
     if(is.null(bias)) bias <- rowData(object)$bias
+    flbias <- rowData(object)$bias
     if(is.null(useWidthAdj)){
       wi <- width(object)
       useWidthAdj <- (mean(abs(wi-median(wi)))/median(wi)) > 0.1
@@ -101,7 +103,8 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     if(isTRUE(useWidthAdj)) useWidthAdj <- 200L
     expectation2 <- useWidthAdj*expectation/pmax(wi, useWidthAdj)
   }
-  background <- getBackgroundBins(expectation2, bias=bias, w=w, bs=bs)
+  background <- getBackgroundBins(expectation2, bias=bias, flbias=flbias, w=w, 
+                                  bs=bs, verbose=FALSE)
   bin_map <- background$peak2bin
   binBinProbs <- background$binBinProbs
   bin2peakMat <- sparseMatrix(i=bin_map, j=seq_along(expectation), 
