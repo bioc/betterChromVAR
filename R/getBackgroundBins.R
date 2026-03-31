@@ -7,7 +7,8 @@
 #'   counts.
 #' @param bias Vector of GC bias (by default obtained from the object).
 #' @param flbias Vector of fragment length bias (by default obtained from the 
-#'   object). Not currently supported.
+#'   object). This is an experimental feature, and we recommend the use of the
+#'   log10-transformed median length of fragments overlapping each region).
 #' @param w Standard deviation of the Gaussian kernel)
 #' @param bs Number of bins per dimension. This can be a single integer (total
 #'   bins = `bs^2`), or an integer vector of length 2 (if `flbias=NULL`) or 3 
@@ -27,9 +28,8 @@
 #'   probabilities, which enables an analytic background computation. It is, as
 #'   such, entirely deterministic.
 #' * The function supports the optional use of a third bias dimension, provided
-#'   through the `flbias` argument, meant for fragment length bias (we 
-#'   recommend the use of the log10-transformed median length of fragments 
-#'   overlapping each region). This is still an experimental feature.
+#'   through the `flbias` argument, meant for fragment length bias. This is 
+#'   still an experimental feature.
 #' 
 #' @return a list with the slots `peak2bin` (which bin each peak belongs to), 
 #'   `binDensity` and `binBinProbs` (the probability of a peak from a given bin 

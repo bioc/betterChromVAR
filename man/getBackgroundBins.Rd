@@ -21,7 +21,8 @@ counts.}
 \item{bias}{Vector of GC bias (by default obtained from the object).}
 
 \item{flbias}{Vector of fragment length bias (by default obtained from the
-object). Not currently supported.}
+object). This is an experimental feature, and we recommend the use of the
+log10-transformed median length of fragments overlapping each region).}
 
 \item{w}{Standard deviation of the Gaussian kernel)}
 
@@ -55,9 +56,8 @@ function returns peak-to-bin mappings and bin-to-bin background selection
 probabilities, which enables an analytic background computation. It is, as
 such, entirely deterministic.
 \item The function supports the optional use of a third bias dimension, provided
-through the \code{flbias} argument, meant for fragment length bias (we
-recommend the use of the log10-transformed median length of fragments
-overlapping each region). This is still an experimental feature.
+through the \code{flbias} argument, meant for fragment length bias. This is
+still an experimental feature.
 }
 }
 \examples{

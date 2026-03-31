@@ -1,7 +1,7 @@
 #' betterChromVAR
 #' 
-#' A fast, analytic implementation of `chromVAR`'s `computeDeviations`, 
-#' additionally enabling balanced expectations and bias shrinkage.
+#' A fast, analytic implementation of `chromVAR`'s `computeDeviations`, with
+#' additional features.
 #' 
 #' @param object A SummarizedExperiment (or SingleCellExperiment) with an assay
 #'    'counts', or a count (sparse) matrix. (Note that the regions should have
@@ -47,6 +47,18 @@
 #'   steps.
 #' @param verbose Logical; whether to output progress messages (default FALSE).
 #' @author Pierre-Luc Germain
+#' 
+#' @details
+#' Contrarily to the original chromVAR, this function is entirely deterministic,
+#' and achieves higher precision and much higher efficiency through two changes:
+#' 1) working with expected background sampling mean and variances, rather than
+#' actual permutations, and 2) computing expectations and variance at the level
+#' of bias bins, instead of in the peak-space. The function additionally 
+#' includes experimental bias shrinkage options, the possibility to handle 
+#' annotations that are not binary (e.g. probability scores) and a third 
+#' bias dimension (fragment length bias, which should be stored in 
+#' `rowData(object)$flbias` see \code{\link{getBackgroundBins}} for details).
+#' 
 #' @references
 #'   Schep A.N., Wu B., Buenrostro J.D., Greenleaf W.J. (2017) chromVAR: 
 #'   inferring transcription-factor-associated accessibility from 
