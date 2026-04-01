@@ -56,7 +56,7 @@ BiocManager::install("plger/betterChromVAR")
 `r Biocpkg("betterChromVAR")` takes two primary inputs: 1) the counts in peaks across cells or samples, and 2) an annotation of which TFs/motifs match which peak^[The annotation can be binary or probabilistic (i.e. from 0 to 1). If using motif matches, however, it is recommended to input binary matches, as the magnitude of motif scores is generally poorly correlated to actual binding.]. Both can be provided as matrices or, better, as `RangedSummarizedExperiment` objects^[See `r Biocpkg("SummarizedExperiment")` if you're not familiar with those].
 
 
-There are multiple ways of generating your peak counts, and the original `r Biocpkg("chromVAR")` package includes such a function. Similarly, the `r Biocpkg("motifmatchr")` package can be used to generate the motif matching annotation. An important consideration is that the peaks or regions used for the purpose of this analysis should have similar widths. It is thus highly recommended, before generating the count and annotation matrices, to resize your regions (e.g. using `peaks <- resize(peaks, width=300, fix="center")`) -- the exact size can be something not too large (otherwise the presence/absence of a motif becomes meaningless) and ideally close to the median size of your original peaks. In addition, is it advisable to restrict your peaks to those that are on standard chromosomes.
+There are multiple ways of generating your peak counts; the original `r Biocpkg("chromVAR")` package includes such a function (`getCounts`), and the `r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package has some with more options (functions `peakCountsFromBAM` and `peakCountsFromFrags`). Similarly, the `r Biocpkg("motifmatchr")` package can be used to generate the motif matching annotation. An important consideration is that the peaks or regions used for the purpose of this analysis should have similar widths. It is thus highly recommended, before generating the count and annotation matrices, to resize your regions (e.g. using `peaks <- resize(peaks, width=300, fix="center")`) -- the exact size can be something not too large (otherwise the presence/absence of a motif becomes meaningless) and ideally close to the median size of your original peaks. In addition, is it advisable to restrict your peaks to those that are on standard chromosomes^[See `keepStandardChromosomes` from the `r Biocpkg("GenomeInfoDb")` package].
 
 Here we'll use dummy data as example:
 
@@ -92,7 +92,7 @@ dev <- betterChromVAR(counts, motifMatches)
 dev
 ```
 
-The resulting `dev` object is a SummarizedExperiment with the same columns (and colData) as the original `counts` object, but with the motifs as rows (instead of the original peaks). When the function is used with default arguments, the results are the same as the original chromVAR (averaging over the noise coming from the random background selection of the original method).
+The resulting `dev` object is a SummarizedExperiment with the same columns (and colData) as the original `counts` object, but with the motifs as rows (instead of the original peaks). The values can be interpreted as the relative activity, across samples or cells, of the corresponding TFs^[Note, however, that similar motifs will be given similar activity estimations, so that it is often hard to know which of a set of highly-similar motifs is in fact responsible for the observed signal.]. When the function is used with default arguments, the results are virtually the same as the original chromVAR (averaging over the noise coming from the random background selection of the original method).
 
 The object contains two assays: the `deviations` assay contains the bias-adjusted deviations from the expectation (by default, the average), i.e. the difference to the expectation divided by the expectation, and the `z` assay contains z-scores, i.e. the difference to the expectation divided by the variance of the expectation.
 
@@ -108,6 +108,17 @@ If bootstrap confidence intervals of the variability are additionally desired,
 one can simply use the `computeVariability` function of `r Biocpkg("chromVAR")` 
 on the present output (i.e. `dev`).
 
+### Including fragment length bias
+
+In addition to the enrichment and GC bias taken into account by the original 
+`r Biocpkg("chromVAR")`, `r Biocpkg("betterChromVAR")` supports an optional 
+third dimension: fragment length bias (see `?betterChromVAR` for more 
+information). This requires the compilation of an additional bias component 
+(the log10-transformed mean or median fragment length per region). If desired, 
+desired, we recommended using the counting functions from the 
+`r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package, which can provide this
+information.
+
 ### Note on single-cell data
 
 If you are using betterChromVAR (or ChromVAR, for that matter) on single-cell data with multiple cell types, the way to best run it depends on whether your are interested in differences within cell types, or between cell types. If interested in differences between cell types, run it on the entire dataset, specifying the cell types as `grouping` argument to `betterChromVAR`. In this way, rare and abundant cell types will be given the same weight in computing the expectation.
@@ -116,7 +127,7 @@ If you are interested in differences within cell types (e.g. between samples/con
 
 ## Bias-normalization of bulk ATAC-seq data
 
-The general chromVAR approach, and in particular the deterministic version implemented here, is also amenable to be used to normalize GC- and enrichment bias out of bulk ATAC-seq data. This is implemented in the `CVnorm` function. In addition, if given a grouping of the samples (e.g. experimental conditions), the function applies a variance-based  smoothing of the bias correction, inspired by smoothed quantile normalization (see the `r Biocpkg("qsmooth")` package or [Hicks et al., Biostatistics 2018](https://doi.org/10.1093/biostatistics/kxx028)). In a nutshell, if the bias in a certain background bin is explained by experimental groups, it will be less corrected than if it varies across samples of the groups.
+The general chromVAR approach, and in particular the deterministic version implemented here, is also amenable to be used to normalize GC- and enrichment bias out of bulk ATAC-seq data. This is implemented in the `CVnorm` function. In addition, if given a grouping of the samples (e.g. experimental conditions), the function applies a variance-based  smoothing of the bias correction, inspired by smoothed quantile normalization (see the `r Biocpkg("qsmooth")` package or [Hicks et al., Biostatistics 2018](https://doi.org/10.1093/biostatistics/kxx028)). In a nutshell, if the bias in a certain background bin is explained by experimental groups, it will be less corrected than if it varies across samples of the groups^[Note that this is different from the original `r Biocpkg("qsmooth")` approach -- see `?CVnorm` for more detail.].
 
 Example usage:
 
@@ -125,6 +136,7 @@ Example usage:
 counts$group <- rep(LETTERS[1:2], each=5)
 # we run the smoothed CVnorm:
 counts <- CVnorm(counts, grouping=counts$group)
+# (the normal CVnorm could be run by omitting the grouping)
 counts
 ```
 

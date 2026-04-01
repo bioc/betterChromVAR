@@ -37,3 +37,14 @@ test_that("CVnorm works", {
   expect_true("corrected" %in% assayNames(counts))
 })
 
+test_that("Fragment length bias works", {
+  rowData(counts)$flbias <- pmax(rnorm(nrow(counts), 2.5, 0.25),0.5)
+  background <- getBackgroundBins(counts, bs=c(10,10,4))
+  expect_equal(nrow(background$binBinProbs), (10*10*4))
+})
+
+test_that("Sampling background peaks works", {
+  background <- getBackgroundBins(counts)
+  bg_peaks <- sampleBackgroundPeaks(background, niterations=10)
+  expect_all_true(dim(bg_peaks)==c(nrow(counts), 10L))
+})
