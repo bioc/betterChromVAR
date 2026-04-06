@@ -48,6 +48,11 @@ setValidity("bcvBackground", function(object) {
   if (length(errors) == 0) TRUE else errors
 })
 
+#' Coerce bcvBackground to a list
+#'
+#' @rdname bcvBackground-methods
+#' @param x A \code{bcvBackground} object.
+#' @return A \code{list} containing the slots of the object.
 #' @export
 setMethod("as.list", "bcvBackground", function(x) {
   list(
@@ -61,6 +66,11 @@ setMethod("as.list", "bcvBackground", function(x) {
   )
 })
 
+#' Show a bcvBackground object
+#'
+#' @rdname bcvBackground-methods
+#' @param x A \code{bcvBackground} object.
+#' @return Nothing, prints an overview of the object.
 #' @export
 setMethod("show", "bcvBackground", function(object) {
   cat("bcvBackground object with", length(object@peak2bin), "peaks,\n",
@@ -70,6 +80,14 @@ setMethod("show", "bcvBackground", function(object) {
     cat("Background data filled for ", length(object@depth), " samples.")
 })
 
+#' Subsetting a bcvBackground
+#'
+#' @rdname bcvBackground-methods
+#' @param x A \code{bcvBackground} object.
+#' @param i,j Indices for subsetting (if j is provided, i is ignored).
+#' @param ... Additional arguments.
+#' @param drop Logical, whether to drop dimensions.
+#' @return An \code{bcvBackground} object.
 #' @export
 setMethod("[", "bcvBackground", function(x, i, j, ..., drop = TRUE){
 
