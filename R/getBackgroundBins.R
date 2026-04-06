@@ -31,9 +31,8 @@
 #'   through the `flbias` argument, meant for fragment length bias. This is 
 #'   still an experimental feature.
 #' 
-#' @return a list with the slots `peak2bin` (which bin each peak belongs to), 
-#'   `binDensity` and `binBinProbs` (the probability of a peak from a given bin 
-#'   being selected as background for another).
+#' @return A `bcvBackground` object, to be used with 
+#'   \code{\link{computeBackgrounds}}.
 #' @references
 #'   Schep A.N., Wu B., Buenrostro J.D., Greenleaf W.J. (2017) chromVAR: 
 #'   inferring transcription-factor-associated accessibility from 
@@ -129,11 +128,15 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   if( (tt["TRUE"]/sum(tt)) < 0.2 )
     binBinProbs <- as(binBinProbs, "sparseMatrix")
     
-  return(list(
-    peak2bin = peak2bin,
-    binDensity = binDensity,
-    binBinProbs = binBinProbs
-  ))
+  new("bcvBackground",
+      dims = bs,
+      peak2bin = as.integer(peak2bin), 
+      binDensity = binDensity, 
+      binBinProbs = as.matrix(binBinProbs),
+      E = NULL,
+      V = NULL,
+      expectation = numeric(), 
+      depth = integer())
 }
 
 
@@ -160,9 +163,10 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
 #' background <- getBackgroundBins(counts_se)
 #' bg_peaks <- sampleBackgroundPeaks(background, niterations=20)
 sampleBackgroundPeaks <- function(background, niterations=50){
-  peak2bin <- background$peak2bin
-  binBinProbs <- background$binBinProbs
-  density <- background$binDensity
+  stopifnot(is(background, "bcvBackground"))
+  peak2bin <- background@peak2bin
+  binBinProbs <- background@binBinProbs
+  density <- background@binDensity
   n_bins <- nrow(binBinProbs)
 
   out <- matrix(0L, nrow=length(peak2bin), ncol=niterations)
@@ -205,3 +209,5 @@ sampleBackgroundPeaks <- function(background, niterations=50){
   
   return(out)
 }
+
+

@@ -39,9 +39,8 @@ with standard workflows.}
 \item{verbose}{Whether to print processing infos.}
 }
 \value{
-a list with the slots \code{peak2bin} (which bin each peak belongs to),
-\code{binDensity} and \code{binBinProbs} (the probability of a peak from a given bin
-being selected as background for another).
+A \code{bcvBackground} object, to be used with
+\code{\link{computeBackgrounds}}.
 }
 \description{
 Computes chromVAR-like background (i.e. bias) bins, as well as bin-to-bin

@@ -1,51 +1,29 @@
 #' betterChromVAR
 #' 
+#' A fast, analytic implementation of `chromVAR`.
+#' This is a wrapper around the \code{\link{getBackgroundBins}},
+#' \code{\link{computeBackgrounds}}, and \code{\link{computeDeviationsAnalytic}}
+#' steps. It additionally allows for multithreading. For more control or 
+#' optimization, see the individual steps.
 #' A fast, analytic implementation of `chromVAR`'s `computeDeviations`, with
 #' additional features.
 #' 
 #' @param object A SummarizedExperiment (or SingleCellExperiment) with an assay
-#'    'counts', or a count (sparse) matrix. (Note that the regions should have
-#'    similar widths.)
+#'    'counts', and with a 'bias' column in `rowData(object)`. Note that the 
+#'    regions should have similar widths.
 #' @param annotations Peak annotation (sparse) matrix, with motifs as columns,
 #'    or a SummarizedExperiment containing this in the first assay. Values 
 #'    should be either logical or between 0 and 1.
 #' @param grouping An optional factor or vector coercible to a factor indicating
-#'   the groupings of the columns of `object`. This is optionally used to 1) 
+#'   the groupings of the columns of `object`. This is optionally used to 
 #'   compute the base expectation such that rare cell types are given as much 
-#'   weight as abundant ones, and 2) apply shrinkage (if `shrinkage!="none"`) 
-#'   on a per-grouping fashion. In single-cell data, the grouping can for 
+#'   weight as abundant ones. In single-cell data, the grouping can for 
 #'   instance be the interaction of samples and cell types. (The name of a 
 #'   colData column of `object` can also be provided.)
-#' @param bias Per-peak bias (i.e. GC content). If omitted, will try to get it
-#'   from `rowData(object)$bias`.
-#' @param w Standard deviation of the Gaussian kernel. Values close to zero will
-#'   effectively mean that only peaks from the same bins are used as background,
-#'   which is suboptimal if the bin is sparsely populated. High values (e.g. >1)
-#'   will lead to homogeneous sampling, which will fail to correct for bias. 
-#'   Values below 0.2 are recommended.
-#' @param bs Number of bins per dimension (see \code{\link{getBackgroundBins}}).
-#' @param sigma Sigma parameter for the 2D smoothing. Ignored unless 
-#'   `shrinkage="smooth"`.
-#' @param shrinkage The method to use to shrink background (i.e. bias) bin 
-#'   frequencies. Either "average" (shrinks towards the bin's average across 
-#'   cells/samples of the same group), "smooth" (per-sample 2D smoothing over
-#'   the bin matrix, somewhat redundant with `w`), or "none" (default).
-#' @param expectation Optional vector of length equal to `nrow(object)` 
-#'   giving the expected counts. If NULL, defaults to mean counts (eventually
-#'   grouped, see `grouping`).
-#' @param dev2global Logical; whether the adjusted deviations should be relative
-#'   to the global expectation (default TRUE), which replicates the original 
-#'   chromVAR. Otherwise the deviations are relative to the background 
-#'   expectation of the cell/sample.
-#' @param intern An optional named list (with slots E, V, bg, and bc) passing
-#'   pre-computed internal values. Alternatively, if `intern=TRUE`, the 
-#'   function will return such a list with internal values. This parameter can 
-#'   be used to pre-compute expensive steps and speed up analyses using the same
-#'   object with different `annotation`.
 #' @param nthreads Either an integer scalar indicating the number of threads to
-#'   use, or a `BiocParallelParam` object. This is only used for subsets of the 
-#'   steps.
+#'   use, or a `BiocParallelParam` object.
 #' @param verbose Logical; whether to output progress messages (default FALSE).
+#' @param ... Passed to \code{\link{getBackgroundBins}}.
 #' @author Pierre-Luc Germain
 #' 
 #' @details
@@ -65,7 +43,8 @@
 #'   single-cell epigenomic data, Nature Methods, doi: 10.1038/nmeth.4401
 #' 
 #' @return A SummarizedExperiment containing the adjusted deviations and 
-#'   z-scores for each motif/sample.
+#'   z-scores for each motif/sample. The rowData additionally contains the 
+#'   number of motif matches and their variability.
 #' @importFrom SummarizedExperiment SummarizedExperiment assay colData rowData
 #' @importFrom S4Vectors metadata
 #' @importFrom Matrix crossprod sparseMatrix kronecker Diagonal cbind2 colSums
@@ -79,59 +58,34 @@
 #' # counts <- addGCBias(counts, genome=YOUR_GENOME)
 #' dev <- betterChromVAR(counts, motifMatches)
 #' dev
-betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL, 
-                           expectation=NULL, verbose=FALSE, bs=NULL, sigma=1,
-                           nthreads=NULL, w=0.1, dev2global=TRUE, intern=NULL,
-                           shrinkage=c("none", "average", "smooth")){
+#' # note that this is the exact equivalent of doing:
+#' # bg <- getBackgroundBins(counts)
+#' # bg <- computeBackgrounds(counts, bg)
+#' # dev <- computeDeviationsAnalytic(counts, bg, motifMatches)
+betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
+                           verbose=FALSE, ...){
   
-  # Check input validity
-  shrinkage <- match.arg(shrinkage)
+  stopifnot(inherits(object, "SummarizedExperiment") ||
+              inherits(object, "SingleCellExperiment"))
   stopifnot(nrow(object) == nrow(annotations))
-  stopifnot(is.null(expectation) || length(expectation)==nrow(object))
-  if(!is.null(intern) && !isTRUE(intern)){
-    if(shrinkage!="none")
-      stop("Shrinkage not possible when providing internal values.")
-    stopifnot(is.list(intern) && all(c("E","V","bg","bc") %in% names(intern)))
-    stopifnot(all(c(ncol(intern$bc), ncol(intern$E), ncol(intern$V)) == 
-                    ncol(object)))
-    stopifnot(all(c(nrow(intern$E),nrow(intern$V),nrow(intern$bc))==(bs^2)))
-  }
-  motifCD <- NULL
+  stopifnot(!is.null(rowData(object)$bias))
+  bias <- rowData(object)$bias
+  motifCD <- flbias <- NULL
+  if(!is.null(rowData(object)$flbias)) flbias <- rowData(object)$flbias
+  
   if( inherits(annotations, "SummarizedExperiment") ){
     motifCD <- colData(annotations)
     annotations <- assay(annotations)
   } 
-  stopifnot(length(dim(annotations))==2)
-  if(max(annotations) > 1 || min(annotations)<0)
-    warning("`annotations` should be either binary or weights from 0 to 1.")
+  .checkAnnotations(annotations)
   
-  if( inherits(object, "SummarizedExperiment") || 
-      inherits(object, "SingleCellExperiment") ){
-    if(is.null(bias)) bias <- rowData(object)$bias
-    flbias <- rowData(object)$flbias
-    counts <- assay(object, "counts")
-  }else{
-    object <- SummarizedExperiment(list(counts=object))
-    counts <- assay(object)
-  }
-  stopifnot(length(dim(counts))==2)
+  grouping <- .groupingInput(grouping, object, TRUE)
   
-  stopifnot(!is.null(bias) && length(bias)==nrow(object))
+  if(verbose) message("Preparing bias bins")
+  expectation <- .get_expectation(object, grouping)
+  bg <- getBackgroundBins(expectation, bias=bias, flbias=flbias, 
+                          verbose=verbose, ...)
   
-  if(!is(counts, "matrix") && !inherits(counts, "Matrix"))
-    stop("`object` should be a SummarizedExperiment or SingleCellExperiment,",
-         " or a (sparse) matrix of counts.")
-  
-  if(is.null(expectation)){
-    expectation <- .get_expectation(counts, grouping)
-  }
-  if(any(expectation==0)){
-      stop("Some peaks have an expectation of zero, most likely because they ",
-           "have zero counts. Please remove them.")
-  }
-
-  if(is.null(grouping)) grouping <- rep(factor("all"), ncol(object))
-  grouping <- .groupingInput(grouping, object)
   ngroups <- length(levels(grouping))
                     
   if(is.null(nthreads)){
@@ -145,145 +99,36 @@ betterChromVAR <- function(object, annotations, grouping=NULL, bias=NULL,
     BPPARAM <- nthreads
   }
   
-  # get background bins (B)
-  if(!is.null(intern) && !isTRUE(intern)){
-    background <- intern$bg
-  }else{
-    if(verbose) message("Preparing bias bins")
-    background <- getBackgroundBins(expectation, bias=bias, flbias=flbias, 
-                                    w=w, bs=bs, verbose=verbose)
-  }
-  bin_map <- background$peak2bin
-  binBinProbs <- background$binBinProbs
-  
-  # sparse mapping from peaks to bins
-  bin2peakMat <- sparseMatrix(i=bin_map, j=seq_along(expectation), 
-                              dims=c(nrow(binBinProbs), length(expectation)))
-
-  binCounts <- NULL
-  if(!dev2global) expectation <- NULL
-  
-  if(shrinkage != "none"){
-    binCounts <- bin2peakMat %*% counts
-    cs <- Matrix::colSums(binCounts)
-    
-    if(verbose) message("Applying shrinkage")
-    il <- split(seq_len(ncol(binCounts)), grouping)
-    binCounts <- Reduce(cbind2, bplapply(il, BPPARAM=BPPARAM, function(i){
-      binCounts2 <- binCounts[,i]
-      cs2 <- cs[i]
-      if(shrinkage=="average"){
-        # method of moment shrinkage towards per-bin average across cells
-        binCounts2 <- shrinkColumnProps(binCounts2)
-      }else if(shrinkage=="smooth"){
-        # method of moment shrinkage towards cell's 2D-smoothed proportions
-        stopifnot(sigma>0)
-        G <- .diagKernalMatrix(sqrt(nrow(binCounts2)), sigma=sigma)
-        # Create the 2D Kronecker Smoothing Matrix
-        G <- Matrix::kronecker(G, G)
-        binCounts2 <- shrinkColumnProps(binCounts2,
-                                        .fastColNorm(G %*% binCounts2))
-      }
-      binCounts2 %*% Diagonal(x=cs2)
-    }))
-    binCounts <- binCounts[,order(unlist(il))]
-  }
-  
-  if(verbose) message("Computing deviations")
-  
-  # bin-level expectations and variances (B x S)
-  i <- seq_len(ncol(counts))
-  if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 & ncol(counts>5000)){
+  i <- seq_len(ncol(object))
+  counts <- assay(object, "counts")
+  if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 && ncol(counts>100)){
+    if(verbose) message("Computing backgrounds and deviations")
     chunks <- split(i, cut(i, nW, labels=FALSE))
     res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
-      binCounts2 <- NULL
-      if(shrinkage!="none") binCounts2 <- binCounts[,i]
-      intern2 <- NULL
-      if(!is.null(intern) && !isTRUE(intern))
-        intern2 <- lapply(c("bc","E","V"), function(x) intern[[x]][,i])
-      .getDeviations(binBinProbs, annotations, binCounts2, counts[,i],
-                     bin2peakMat, background$binDensity,
-                     expectation=expectation, intern=intern2)
+      bg <- computeBackgrounds(counts[,i], bg[,i], expectation=expectation,
+                               verbose=FALSE)
+      computeDeviationsAnalytic(object[,i], bg, annotations, verbose=FALSE,
+                                retSE=FALSE, compute=c("deviations","z"))
     })
-    if(isTRUE(intern)){
-      res <- lapply(c(bc="bc",E="E",V="V"), function(x){
-        Reduce(cbind2, lapply(res, function(y) y[[x]]))
-      })
-    }else{
-      res <- list(deviations=Reduce(cbind2,
-                                    lapply(res, function(x) x$deviations)),
-                  z=Reduce(cbind2, lapply(res, function(x) x$z)))
-    }
+    res <- list(deviations=Reduce(cbind2,
+                                  lapply(res, function(x) x$deviations)),
+                z=Reduce(cbind2, lapply(res, function(x) x$z)),
+                total=Reduce("+", lapply(res, function(x) x$total)))
   }else{
-    res <- .getDeviations(binBinProbs, annotations, binCounts, counts, 
-                          bin2peakMat, background$binDensity,
-                          expectation=expectation, intern)
-  }
-  if(isTRUE(intern)){
-    res$bg <- background
-    return(res)
+    if(verbose) message("Computing backgrounds")
+    bg <- computeBackgrounds(counts, bg, expectation=expectation,
+                             verbose=verbose)
+    if(verbose) message("Computing deviations")
+    res <- computeDeviationsAnalytic(object, bg, annotations, verbose=verbose,
+                                     retSE=FALSE, compute=c("deviations","z"))
   }
   
   sd_deviations <- rowSds(res$z, na.rm=TRUE)
-  # copied from chromVAR:
   p_sd <- pchisq((ncol(counts) - 1) * (sd_deviations^2),
                  df=(ncol(counts)-1), lower.tail = FALSE)
-  d <- data.frame(variability = sd_deviations, var.pval = p_sd, 
-                  var.adjPval = p.adjust(p = p_sd, method = "BH"))
+  d <- data.frame(N=colSums(annotations), total=res$total,
+                  variability=sd_deviations, var.pval=p_sd,
+                  var.adjPval=p.adjust(p = p_sd, method = "BH"))
   
-  if(!is.null(motifCD)) d <- cbind(motifCD, d)
-  
-  SummarizedExperiment(
-    assays = res,
-    colData = colData(object),
-    rowData = d,
-    metadata = metadata(object)
-  )
-}
-
-.getDeviations <- function(binBinProbs, annotations, binCounts=NULL, 
-                           counts, bin2peakMat, binDensity, expectation=NULL,
-                           intern=NULL){
-  
-  if(!is.null(intern) && !isTRUE(intern) && 
-     all(c("E","V","bg","bc") %in% names(intern))){
-    binCounts <- intern$bc
-    E <- intern$E
-    V <- intern$V
-  }else{
-    if(is.null(binCounts)) binCounts <- bin2peakMat %*% counts
-    
-    # bin-level expectations and variances (B x S)
-    E <- binBinProbs %*% binCounts
-    V <- as.matrix( ((bin2peakMat %*% (counts^2))/pmax(1, binDensity))-
-                      ((E/pmax(1, binDensity))^2) )
-    V[V < 0] <- 0
-    V <- binBinProbs %*% (V * binDensity)
-    
-    if(isTRUE(intern)) return(list(E=E, V=V, bc=binCounts))
-  }
-
-  # motif-level background stats (M x S)
-  motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
-  motif_bg_exp <- as.matrix(motifBinCounts %*% E)
-  motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% V)))
-  
-  # observed motif sums (M x S)
-  observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
-  
-  # deviation = (Obs - bgExpect) / bgExpect; z = (Obs-exp)/sdExpect
-  deviations <- observed_motif_sum - motif_bg_exp  
-  z_scores <- deviations / motif_bg_sd
-  if(is.null(expectation)){
-    # use the cell's background as expectation
-    deviations <- deviations / motif_bg_exp
-  }else{
-    # global motif expectation
-    # denom = motif peak counts scaled by the cell's libsize
-    # (this should be like the original CV)
-    globalMotifAvg <- as.vector(Matrix::crossprod(annotations, expectation))
-    sf <- Matrix::colSums(counts) / sum(expectation)
-    deviations <- deviations/outer(globalMotifAvg, sf)
-  }
-  list(deviations=deviations, z=z_scores)
+  .packageDevSE(res[1:2], object, motifCD, d)
 }

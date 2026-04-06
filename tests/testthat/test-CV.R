@@ -16,18 +16,23 @@ test_that("betterChromVAR runs", {
   checkDevOutput(dev)
 })
 
+bg <- getBackgroundBins(counts)
+
 test_that("shrinkage works", {
-  dev <- betterChromVAR(counts, motifMatches, grouping=counts$groups,
-                        shrinkage="average")
+  bg <- computeBackgrounds(counts, bg, grouping=counts$groups,
+                           shrinkage="average")
+  dev <- computeDeviationsAnalytic(counts, bg, motifMatches)
   checkDevOutput(dev)
-  dev <- betterChromVAR(counts, motifMatches, grouping=counts$groups,
-                        shrinkage="smooth")
+  bg <- computeBackgrounds(counts, bg, grouping=counts$groups,
+                           shrinkage="smooth")
+  dev <- computeDeviationsAnalytic(counts, bg, motifMatches)
+  checkDevOutput(dev)
 })
 
 test_that("multithreading works", {
   bp <- SnowParam(2)
   dev <- betterChromVAR(counts, motifMatches, grouping=counts$groups,
-                        shrinkage="average", nthreads=bp)
+                        nthreads=bp)
   checkDevOutput(dev)
 })
 
@@ -40,7 +45,7 @@ test_that("CVnorm works", {
 test_that("Fragment length bias works", {
   rowData(counts)$flbias <- pmax(rnorm(nrow(counts), 2.5, 0.25),0.5)
   background <- getBackgroundBins(counts, bs=c(10,10,4))
-  expect_equal(nrow(background$binBinProbs), (10*10*4))
+  expect_equal(nrow(background@binBinProbs), (10*10*4))
 })
 
 test_that("Sampling background peaks works", {

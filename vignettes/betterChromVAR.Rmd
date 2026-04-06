@@ -55,7 +55,6 @@ BiocManager::install("plger/betterChromVAR")
 
 `r Biocpkg("betterChromVAR")` takes two primary inputs: 1) the counts in peaks across cells or samples, and 2) an annotation of which TFs/motifs match which peak^[The annotation can be binary or probabilistic (i.e. from 0 to 1). If using motif matches, however, it is recommended to input binary matches, as the magnitude of motif scores is generally poorly correlated to actual binding.]. Both can be provided as matrices or, better, as `RangedSummarizedExperiment` objects^[See `r Biocpkg("SummarizedExperiment")` if you're not familiar with those].
 
-
 There are multiple ways of generating your peak counts; the original `r Biocpkg("chromVAR")` package includes such a function (`getCounts`), and the `r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package has some with more options (functions `peakCountsFromBAM` and `peakCountsFromFrags`). Similarly, the `r Biocpkg("motifmatchr")` package can be used to generate the motif matching annotation. An important consideration is that the peaks or regions used for the purpose of this analysis should have similar widths. It is thus highly recommended, before generating the count and annotation matrices, to resize your regions (e.g. using `peaks <- resize(peaks, width=300, fix="center")`) -- the exact size can be something not too large (otherwise the presence/absence of a motif becomes meaningless) and ideally close to the median size of your original peaks. In addition, is it advisable to restrict your peaks to those that are on standard chromosomes^[See `keepStandardChromosomes` from the `r Biocpkg("GenomeInfoDb")` package].
 
 Here we'll use dummy data as example:
@@ -112,7 +111,7 @@ on the present output (i.e. `dev`).
 
 In addition to the enrichment and GC bias taken into account by the original 
 `r Biocpkg("chromVAR")`, `r Biocpkg("betterChromVAR")` supports an optional 
-third dimension: fragment length bias (see `?betterChromVAR` for more 
+third dimension: fragment length bias (see `?getBackgroundBins` for more 
 information). This requires the compilation of an additional bias component 
 (the log10-transformed mean or median fragment length per region). If desired, 
 desired, we recommended using the counting functions from the 
@@ -124,6 +123,34 @@ information.
 If you are using betterChromVAR (or ChromVAR, for that matter) on single-cell data with multiple cell types, the way to best run it depends on whether your are interested in differences within cell types, or between cell types. If interested in differences between cell types, run it on the entire dataset, specifying the cell types as `grouping` argument to `betterChromVAR`. In this way, rare and abundant cell types will be given the same weight in computing the expectation.
 
 If you are interested in differences within cell types (e.g. between samples/conditions), you should instead run the method separately for each cell type. In this way, the background bins will be defined based on the enrichment in the given cell type, leading to better capture of the bias. The drawback, however, is that the values won't be comparable across cell types. To test across conditions, we also recommend using it on pseudobulk data.
+
+## Individual steps of betterChromVAR
+
+The `betterChromVAR` function is actually a wrapper around three steps, which can also be executed individually for more customization, or to avoid repeating some computation multiple times.
+
+The first step is creating the bias bin and their pairwise sampling probabilities. This is achieve with:
+
+```{r getBackgroundBins}
+bg <- getBackgroundBins(counts)
+bg
+```
+
+The second step is computing the per-bin background expectations and variances for each sample or cell:
+
+```{r computeBackgrounds}
+bg <- computeBackgrounds(counts, bg)
+bg
+```
+
+The `bg` object has now been filled with the additional information. It can now be used for:
+
+```{r computeDeviations}
+dev <- computeDeviationsAnalytic(counts, background=bg, annotations=motifMatches)
+dev
+```
+
+This last call could be made with different annotations, without needed to recompute the previous steps.
+
 
 ## Bias-normalization of bulk ATAC-seq data
 

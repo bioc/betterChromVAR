@@ -8,80 +8,45 @@ betterChromVAR(
   object,
   annotations,
   grouping = NULL,
-  bias = NULL,
-  expectation = NULL,
-  verbose = FALSE,
-  bs = NULL,
-  sigma = 1,
   nthreads = NULL,
-  w = 0.1,
-  dev2global = TRUE,
-  intern = NULL,
-  shrinkage = c("none", "average", "smooth")
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
 \item{object}{A SummarizedExperiment (or SingleCellExperiment) with an assay
-'counts', or a count (sparse) matrix. (Note that the regions should have
-similar widths.)}
+'counts', and with a 'bias' column in \code{rowData(object)}. Note that the
+regions should have similar widths.}
 
 \item{annotations}{Peak annotation (sparse) matrix, with motifs as columns,
 or a SummarizedExperiment containing this in the first assay. Values
 should be either logical or between 0 and 1.}
 
 \item{grouping}{An optional factor or vector coercible to a factor indicating
-the groupings of the columns of \code{object}. This is optionally used to 1)
+the groupings of the columns of \code{object}. This is optionally used to
 compute the base expectation such that rare cell types are given as much
-weight as abundant ones, and 2) apply shrinkage (if \code{shrinkage!="none"})
-on a per-grouping fashion. In single-cell data, the grouping can for
+weight as abundant ones. In single-cell data, the grouping can for
 instance be the interaction of samples and cell types. (The name of a
 colData column of \code{object} can also be provided.)}
 
-\item{bias}{Per-peak bias (i.e. GC content). If omitted, will try to get it
-from \code{rowData(object)$bias}.}
-
-\item{expectation}{Optional vector of length equal to \code{nrow(object)}
-giving the expected counts. If NULL, defaults to mean counts (eventually
-grouped, see \code{grouping}).}
+\item{nthreads}{Either an integer scalar indicating the number of threads to
+use, or a \code{BiocParallelParam} object.}
 
 \item{verbose}{Logical; whether to output progress messages (default FALSE).}
 
-\item{bs}{Number of bins per dimension (see \code{\link{getBackgroundBins}}).}
-
-\item{sigma}{Sigma parameter for the 2D smoothing. Ignored unless
-\code{shrinkage="smooth"}.}
-
-\item{nthreads}{Either an integer scalar indicating the number of threads to
-use, or a \code{BiocParallelParam} object. This is only used for subsets of the
-steps.}
-
-\item{w}{Standard deviation of the Gaussian kernel. Values close to zero will
-effectively mean that only peaks from the same bins are used as background,
-which is suboptimal if the bin is sparsely populated. High values (e.g. >1)
-will lead to homogeneous sampling, which will fail to correct for bias.
-Values below 0.2 are recommended.}
-
-\item{dev2global}{Logical; whether the adjusted deviations should be relative
-to the global expectation (default TRUE), which replicates the original
-chromVAR. Otherwise the deviations are relative to the background
-expectation of the cell/sample.}
-
-\item{intern}{An optional named list (with slots E, V, bg, and bc) passing
-pre-computed internal values. Alternatively, if \code{intern=TRUE}, the
-function will return such a list with internal values. This parameter can
-be used to pre-compute expensive steps and speed up analyses using the same
-object with different \code{annotation}.}
-
-\item{shrinkage}{The method to use to shrink background (i.e. bias) bin
-frequencies. Either "average" (shrinks towards the bin's average across
-cells/samples of the same group), "smooth" (per-sample 2D smoothing over
-the bin matrix, somewhat redundant with \code{w}), or "none" (default).}
+\item{...}{Passed to \code{\link{getBackgroundBins}}.}
 }
 \value{
 A SummarizedExperiment containing the adjusted deviations and
-z-scores for each motif/sample.
+z-scores for each motif/sample. The rowData additionally contains the
+number of motif matches and their variability.
 }
 \description{
+A fast, analytic implementation of \code{chromVAR}.
+This is a wrapper around the \code{\link{getBackgroundBins}},
+\code{\link{computeBackgrounds}}, and \code{\link{computeDeviationsAnalytic}}
+steps. It additionally allows for multithreading. For more control or
+optimization, see the individual steps.
 A fast, analytic implementation of \code{chromVAR}'s \code{computeDeviations}, with
 additional features.
 }
@@ -104,6 +69,10 @@ attach(getDummyData())
 # counts <- addGCBias(counts, genome=YOUR_GENOME)
 dev <- betterChromVAR(counts, motifMatches)
 dev
+# note that this is the exact equivalent of doing:
+# bg <- getBackgroundBins(counts)
+# bg <- computeBackgrounds(counts, bg)
+# dev <- computeDeviationsAnalytic(counts, bg, motifMatches)
 }
 \references{
 Schep A.N., Wu B., Buenrostro J.D., Greenleaf W.J. (2017) chromVAR:

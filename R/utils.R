@@ -29,6 +29,10 @@
 }
 
 .get_expectation <- function(counts, grouping=NULL){
+  if( inherits(counts, "SummarizedExperiment") || 
+      inherits(counts, "SingleCellExperiment") ){
+    counts <- assay(counts, "counts")
+  }
   if(is.null(grouping) || length(unique(grouping))==1)
     return(Matrix::rowMeans(counts))
   grouping <- factor(grouping)
@@ -207,4 +211,47 @@ addGCBias <- function(object, genome){
   }
   stopifnot(length(grouping)==ncol(object))
   factor(grouping)
+}
+
+#' normalizeDevsForSize
+#' 
+#' Normalizes the z-scores assay of a deviations object to make the scores 
+#' comparable across motifs with different number of matches.
+#'
+#' @param dev A SummarizedExperiment object as produced by 
+#'   \code{\link{betterChromVAR}} or \code{\link{computeDeviationsAnalytic}}.
+#'
+#' @returns The `dev` object with an additional assay named 'norm'.
+#' @export
+#'
+#' @examples
+#' attach(getDummyData())
+#' dev <- betterChromVAR(counts, motifMatches)
+#' dev <- normalizeDevsForSize(dev)
+#' dev
+normalizeDevsForSize <- function(dev){
+  stopifnot(inherits(dev, "SummarizedExperiment"))
+  stopifnot("z" %in% assayNames(dev))
+  stopifnot(!is.null(rowData(dev)$N))
+  N <- rowData(dev)$N
+  assay(dev, "norm") <- assay(dev, "z")*sqrt(round(median(N))/N)
+  dev
+}
+
+
+.packageDevSE <- function(a, object, motifCD, d){
+  if(!is.null(motifCD)) d <- cbind(motifCD, d)
+  a <- a[intersect(c("deviations","z"),names(a))]
+  SummarizedExperiment(
+    assays = a,
+    colData = colData(object),
+    rowData = d,
+    metadata = metadata(object)
+  )  
+}
+
+.checkAnnotations <- function(annotations){
+  stopifnot(length(dim(annotations))==2)
+  if(max(annotations) > 1 || min(annotations)<0)
+    warning("`annotations` should be either binary or weights from 0 to 1.")
 }

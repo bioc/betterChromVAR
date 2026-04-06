@@ -86,6 +86,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
     counts <- object
   }
   stopifnot(!is.null(bias) && length(bias) == nrow(counts))
+  if(is(counts, "dgeMatrix")) counts <- as.matrix(counts)
   grouping <- .groupingInput(grouping, object)
   smoothGrouping <- .groupingInput(smoothGrouping, object)
   shrinkMode <- match.arg(shrinkMode)
@@ -105,8 +106,8 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   }
   background <- getBackgroundBins(expectation2, bias=bias, flbias=flbias, w=w, 
                                   bs=bs, verbose=FALSE)
-  bin_map <- background$peak2bin
-  binBinProbs <- background$binBinProbs
+  bin_map <- background@peak2bin
+  binBinProbs <- background@binBinProbs
   bin2peakMat <- sparseMatrix(i=bin_map, j=seq_along(expectation), 
                               dims=c(nrow(binBinProbs), length(expectation)))
   
