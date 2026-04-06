@@ -4,17 +4,16 @@ setClassUnion("AnyMatrixOrNULL",
 
 #' Bin and background data for betterChromVAR (for internal use)
 #' @export
-setClass("bcvBackground",
-         slots = list(
-           dims        = "integer",
-           peak2bin    = "integer",
-           binDensity  = "integer",
-           binBinProbs = "matrix",
-           E           = "AnyMatrixOrNULL",
-           V           = "AnyMatrixOrNULL",
-           expectation = "numeric",
-           depth       = "numeric"
-         ))
+setClass("bcvBackground", slots = list(
+                                     dims        = "integer",
+                                     peak2bin    = "integer",
+                                     binDensity  = "integer",
+                                     binBinProbs = "matrix",
+                                     E           = "AnyMatrixOrNULL",
+                                     V           = "AnyMatrixOrNULL",
+                                     expectation = "numeric",
+                                     depth       = "numeric"
+                                   ))
 
 setValidity("bcvBackground", function(object) {
   errors <- character()
@@ -69,8 +68,9 @@ setMethod("as.list", "bcvBackground", function(x) {
 #' Show a bcvBackground object
 #'
 #' @rdname bcvBackground-methods
-#' @param x A \code{bcvBackground} object.
+#' @param object A \code{bcvBackground} object.
 #' @return Nothing, prints an overview of the object.
+#' @importMethodsFrom methods show
 #' @export
 setMethod("show", "bcvBackground", function(object) {
   cat("bcvBackground object with", length(object@peak2bin), "peaks,\n",
@@ -88,6 +88,7 @@ setMethod("show", "bcvBackground", function(object) {
 #' @param ... Additional arguments.
 #' @param drop Logical, whether to drop dimensions.
 #' @return An \code{bcvBackground} object.
+#' @importFrom methods validObject
 #' @export
 setMethod("[", "bcvBackground", function(x, i, j, ..., drop = TRUE){
 

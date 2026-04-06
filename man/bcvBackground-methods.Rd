@@ -15,6 +15,8 @@
 \arguments{
 \item{x}{A \code{bcvBackground} object.}
 
+\item{object}{A \code{bcvBackground} object.}
+
 \item{i, j}{Indices for subsetting (if j is provided, i is ignored).}
 
 \item{...}{Additional arguments.}

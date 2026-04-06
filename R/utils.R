@@ -140,6 +140,7 @@ shrinkColumnProps <- function(x, shrinkTo=NULL, var.theo=FALSE) {
 #' @importFrom stats rnorm rnbinom
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
+#' @importFrom SummarizedExperiment rowData<-
 #' @export
 #'
 #' @examples

@@ -40,8 +40,8 @@
 #'   
 #' @importFrom stats cov dnorm dist
 #' @importFrom SummarizedExperiment assay rowData
-#' @importFrom matrixStats rowMins rowMaxs
-#' @importFrom methods as is
+#' @importFrom matrixStats colMins colMaxs
+#' @importFrom methods as is new
 #' @export
 #' @examples
 #' counts_se <- getDummyData()$counts
