@@ -31,29 +31,26 @@ coverage](https://codecov.io/gh/plger/betterChromVAR/graph/badge.svg)](https://a
 <!-- badges: end -->
 
 `betterChromVAR` is a much faster, deterministic implementation of the 
-popular chromVAR (Chromatin Variation Across Regions) method, used to 
-infer TF activity from (bulk or single-cell) ATAC-seq data and motif 
-annotations. The package also includes an ATAC-seq normalization 
+popular [chromVAR](https://greenleaflab.github.io/chromVAR/) (Chromatin 
+Variation Across Regions) method, used to infer TF activity from (bulk 
+or single-cell) ATAC-seq data and motif annotations. The functions 
+additionally have extra options and also include an ATAC-seq normalization 
 method based on the general chromVAR logic.
 
-On a dataset of ~31k cells, ~150k regions, and ~2k motifs, the original chromVAR took 138min to run, the ArchR version 78min, while betterChromVAR ran in ~2min, with outputs correlating to the original by ~0.99.
+On a dataset of ~31k cells, ~150k regions, and ~2k motifs, 
+the original chromVAR took 138min to run, the ArchR version 78min, 
+while betterChromVAR ran in ~2min, with outputs correlating to the original by ~0.995.
 
 ## Installation instructions
 
-<!--
-Get the latest stable `R` release from [CRAN](http://cran.r-project.org/). Then install `betterChromVAR` from [Bioconductor](http://bioconductor.org/) using the following code:
-&#10;
-``` r
-if (!requireNamespace("BiocManager", quietly = TRUE)) {
-    install.packages("BiocManager")
-}
-&#10;BiocManager::install("betterChromVAR")
+You can install it from Bioconductor using:
+
+```r
+BiocManager::install("betterChromVAR")
 ```
--->
 
-Install the development version from
-[GitHub](https://github.com/plger/betterChromVAR) with:
+or install the development version from github with:
 
-``` r
+```r
 BiocManager::install("plger/betterChromVAR")
 ```
