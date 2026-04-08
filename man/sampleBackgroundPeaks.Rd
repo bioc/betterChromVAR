@@ -7,7 +7,8 @@
 sampleBackgroundPeaks(background, niterations = 50)
 }
 \arguments{
-\item{background}{List output from \code{\link{getBackgroundBins}}.}
+\item{background}{A \code{bcvBackground} produced by
+\code{\link{getBackgroundBins}}.}
 
 \item{niterations}{Number of background peaks to sample for each target peak.}
 }

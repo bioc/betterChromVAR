@@ -16,15 +16,19 @@ getBackgroundBins(
 }
 \arguments{
 \item{x}{A SummarizedExperiment containing a 'counts' assay, or a matrix of
-counts.}
+counts, or a vector of log10-transformed expectations.}
 
-\item{bias}{Vector of GC bias (by default obtained from the object).}
+\item{bias}{A vector of length equal to \code{ncol(object)} specifying the
+per-peak bias (i.e. GC content). If omitted, will try to get it
+from \code{rowData(x)$bias}.}
 
-\item{flbias}{Vector of fragment length bias (by default obtained from the
-object). This is an experimental feature, and we recommend the use of the
-log10-transformed median length of fragments overlapping each region).}
+\item{flbias}{A vector of length equal to \code{ncol(object)} specifying the
+per-peak fragment length bias (e.g. log10-transformed median length of
+fragments overlapping each region). If omitted, will try to get it
+from \code{rowData(object)$flbias}. If absent, will use 2-dimensional bias bins
+(which is already pretty good).}
 
-\item{w}{Standard deviation of the Gaussian kernel)}
+\item{w}{Standard deviation of the Gaussian kernel.}
 
 \item{bs}{Number of bins per dimension. This can be a single integer (total
 bins = \code{bs^2}), or an integer vector of length 2 (if \code{flbias=NULL}) or 3
@@ -36,7 +40,7 @@ default, \code{bs=50} if \code{flbias} is not provided (mimicking chromVAR), and
 \item{pseudo}{Optional pseudocount to be added. This should not be needed
 with standard workflows.}
 
-\item{verbose}{Whether to print processing infos.}
+\item{verbose}{Whether to print processing info.}
 }
 \value{
 A \code{bcvBackground} object, to be used with

@@ -22,15 +22,20 @@ CVnorm(
 \item{object}{A matrix of counts, or a SummarizedExperiment-like object with
 an assay named 'counts'.}
 
-\item{bias}{Per-peak bias (i.e. GC content). If omitted, will try to get it
+\item{bias}{A vector of length equal to \code{ncol(object)} specifying the
+per-peak bias (i.e. GC content). If omitted, will try to get it
 from \code{rowData(object)$bias}.}
 
 \item{grouping}{Optional grouping for the baseline expectation (prevents
-bias toward more abundant groups).}
+bias toward more abundant groups). This should either be a vector coercible
+to factor of length equal to \code{ncol(object)}, of a character of length 1
+specifying a column of \code{colData(object)} (if \code{object} is a
+\code{SummarizedExperiment}).}
 
 \item{smoothGrouping}{Optional grouping to determine correction strength.
-If bias is consistent within these groups, correction is reduced. By
-default this is the same as \code{grouping}.}
+If bias is consistent within these groups, correction is reduced. Accepts
+the same type of inputs as \code{grouping}, and by default takes the same
+values.}
 
 \item{shrinkMode}{The way to perform the group-based shrinkage. With
 \code{shrinkMode="dampen"} (default), no corrected is applied in bins when the

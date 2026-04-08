@@ -26,8 +26,9 @@ should be either logical or between 0 and 1.}
 the groupings of the columns of \code{object}. This is optionally used to
 compute the base expectation such that rare cell types are given as much
 weight as abundant ones. In single-cell data, the grouping can for
-instance be the interaction of samples and cell types. (The name of a
-colData column of \code{object} can also be provided.)}
+instance be the interaction of samples and cell types. This should either
+be a vector coercible to factor of length equal to \code{ncol(object)}, or a
+character of length 1 specifying a column of \code{colData(object)}.}
 
 \item{nthreads}{Either an integer scalar indicating the number of threads to
 use, or a \code{BiocParallelParam} object.}

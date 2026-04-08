@@ -18,8 +18,9 @@
 #'   the groupings of the columns of `object`. This is optionally used to 
 #'   compute the base expectation such that rare cell types are given as much 
 #'   weight as abundant ones. In single-cell data, the grouping can for 
-#'   instance be the interaction of samples and cell types. (The name of a 
-#'   colData column of `object` can also be provided.)
+#'   instance be the interaction of samples and cell types. This should either 
+#'   be a vector coercible to factor of length equal to `ncol(object)`, or a 
+#'   character of length 1 specifying a column of `colData(object)`.
 #' @param nthreads Either an integer scalar indicating the number of threads to
 #'   use, or a `BiocParallelParam` object.
 #' @param verbose Logical; whether to output progress messages (default FALSE).
