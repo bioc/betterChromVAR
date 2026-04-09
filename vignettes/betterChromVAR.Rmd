@@ -249,7 +249,7 @@ If data is on disk, rather than in memory, and you are adjusting the expectation
 based on cell-type abundance using the `grouping` argument, `getBackgroundBins` 
 will load the entire count matrix into memory. To avoid this, compute the 
 mean per group using block-wise operations, for instance using the 
-`aggregateAcrossCells()` function of the `r biocpkg("scrapper")` package, and
+`aggregateAcrossCells()` function of the `r Biocpkg("scrapper")` package, and
 then use the `rowMeans()` of that as expectation.
 
 <br/><br/>
