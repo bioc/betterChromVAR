@@ -26,5 +26,5 @@ Computes expected counts (a glorified rowMeans)
 }
 \examples{
 attach(getDummyData())
-e <- getExpecation(counts)
+e <- getExpectation(counts)
 }
