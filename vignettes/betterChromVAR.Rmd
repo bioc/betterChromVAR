@@ -46,7 +46,8 @@ method based on the chromVAR logic.
 
 ## Installing `betterChromVAR`
 
-`r Biocpkg("betterChromVAR")` is a `R` package available via the [Bioconductor](http://bioconductor.org) repository. It can be installed using
+`r Biocpkg("betterChromVAR")` is a `R` package available via the 
+[Bioconductor](http://bioconductor.org) repository. It can be installed using
 the following commands in your `R` session:
 
 ```{r "install", eval = FALSE}
@@ -157,35 +158,8 @@ If bootstrap confidence intervals of the variability are additionally desired,
 one can simply use the `computeVariability` function of `r Biocpkg("chromVAR")` 
 on the present output (i.e. `dev`).
 
-### Including fragment length bias
 
-In addition to the enrichment and GC bias taken into account by the original 
-`r Biocpkg("chromVAR")`, `r Biocpkg("betterChromVAR")` supports an optional 
-third dimension: fragment length bias (see `?getBackgroundBins()` for more 
-information). This requires the compilation of an additional bias component 
-(the log10-transformed mean or median fragment length per region). If desired, 
-desired, we recommended using the counting functions from the 
-`r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package, which can provide this
-information.
-
-### Note on single-cell data
-
-If you are using betterChromVAR (or ChromVAR, for that matter) on single-cell 
-data with multiple cell types, the way to best run it depends on whether your 
-are interested in differences within cell types, or between cell types. If 
-interested in differences between cell types, run it on the entire dataset, 
-specifying the cell types as `grouping` argument to `betterChromVAR()`. In this 
-way, rare and abundant cell types will be given the same weight in computing 
-the expectation.
-
-If you are interested in differences within cell types (e.g. between 
-samples/conditions), you should instead run the method separately for each cell 
-type. In this way, the background bins will be defined based on the enrichment 
-in the given cell type, leading to better capture of the bias. The drawback, 
-however, is that the values won't be comparable across cell types. To test 
-across conditions, we also recommend using it on pseudobulk data.
-
-## Individual steps of betterChromVAR
+### Individual steps of betterChromVAR
 
 The `betterChromVAR()` function is actually a wrapper around three steps, which 
 can also be executed individually for more customization, or to avoid repeating 
@@ -218,6 +192,67 @@ dev
 This last call could be made with different annotations, without needed to 
 recompute the previous steps.
 
+
+### Including fragment length bias
+
+In addition to the enrichment and GC bias taken into account by the original 
+`r Biocpkg("chromVAR")`, `r Biocpkg("betterChromVAR")` supports an optional 
+third dimension: fragment length bias (see `?getBackgroundBins()` for more 
+information). This requires the compilation of an additional bias component 
+(the log10-transformed mean or median fragment length per region). If desired, 
+desired, we recommended using the counting functions from the 
+`r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package, which can provide this
+information.
+
+### Note on single-cell data
+
+If you are using betterChromVAR (or ChromVAR, for that matter) on single-cell 
+data with multiple cell types, the way to best run it depends on whether your 
+are interested in differences within cell types, or between cell types. If 
+interested in differences between cell types, run it on the entire dataset, 
+specifying the cell types as `grouping` argument to `betterChromVAR()`. In this 
+way, rare and abundant cell types will be given the same weight in computing 
+the expectation.
+
+If you are interested in differences within cell types (e.g. between 
+samples/conditions), you should instead run the method separately for each cell 
+type. In this way, the background bins will be defined based on the enrichment 
+in the given cell type, leading to better capture of the bias. The drawback, 
+however, is that the values won't be comparable across cell types. To test 
+across conditions, we also recommend using it on pseudobulk data.
+
+#### Execution on Atlas-scale datasets
+
+The only step of the process that needs to be done across the entire dataset is
+the computing of the expectation, i.e. the mean (or weighted mean) for each 
+region across all cells, and the creation of the background bins, which depends
+on it. Everything else can easily be executed in chunks (of cells), as is done 
+for multi-threading in the `betterChromVAR()` function. This can be done 
+manually on the full dataset, and then passed to downstream functions for 
+computations on subsets of the data:
+
+```{r getExpectations}
+ex <- getExpectation(counts)
+bg <- getBackgroundBins(ex, bias=rowData(counts)$bias)
+# this is equivalent to bg <- getBackgroundBins(counts)
+```
+Then we can apply the next steps only on subset of the data:
+
+```{r computeBackgrounds}
+bg2 <- computeBackgrounds(counts[,1:3], bg, expectation = ex)
+dev2 <- computeDeviationsAnalytic(counts[,1:3], bg2, motifMatches)
+# this should be identical to what we had run on the whole object:
+identical(assay(dev)[,1:3], assay(dev2))
+```
+
+If data is on disk, rather than in memory, and you are adjusting the expectation
+based on cell-type abundance using the `grouping` argument, `getBackgroundBins` 
+will load the entire count matrix into memory. To avoid this, compute the 
+mean per group using block-wise operations, for instance using the 
+`aggregateAcrossCells()` function of the `r biocpkg("scrapper")` package, and
+then use the `rowMeans()` of that as expectation.
+
+<br/><br/>
 
 ## Bias-normalization of bulk ATAC-seq data
 

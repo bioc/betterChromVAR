@@ -4,7 +4,7 @@
 #' selection probabilities needed for \code{\link{betterChromVAR}}.
 #' 
 #' @param x A SummarizedExperiment containing a 'counts' assay, or a matrix of
-#'   counts, or a vector of log10-transformed expectations.
+#'   counts, or a vector of expected (e.g. mean) counts.
 #' @param bias A vector of length equal to `ncol(object)` specifying the 
 #'   per-peak bias (i.e. GC content). If omitted, will try to get it
 #'   from `rowData(x)$bias`.
@@ -56,11 +56,11 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
       inherits(x, "SingleCellExperiment")) {
     if(is.null(bias)) bias <- rowData(x)$bias
     if(is.null(flbias)) flbias <- rowData(x)$flbias
-    x <- rowSums(assay(x, "counts"))
+    x <- rowMeans(assay(x, "counts"))
   }else if(is.null(bias)){
     stopifnot("`bias` not provided, and not found in the object.")
   }else if(is.matrix(x) || is(x, "Matrix")){
-    x <- rowSums(x)
+    x <- rowMeans(x)
   }
   stopifnot(length(bias)==nrow(x))
   

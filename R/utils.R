@@ -28,7 +28,26 @@
   G
 }
 
-.get_expectation <- function(counts, grouping=NULL){
+#' getExpectation
+#' 
+#' Computes expected counts (a glorified rowMeans)
+#'
+#' @param counts A count matrix, or object inheriting SummarizedExperiment with
+#'   a 'counts' assay.
+#' @param grouping An optional vector of length equal to `ncol(counts)`,
+#'   indicating the grouping of the cells. If provided, cells will be averaged
+#'   by group before averaging across groups.
+#' @param normalize Logical; whether to normalize data between averaging (but
+#'   after grouping). Default TRUE and highly recommended if providing 
+#'   `grouping`.
+#'
+#' @returns A vector of expectation for each row of `counts`
+#' @export
+#'
+#' @examples
+#' attach(getDummyData())
+#' e <- getExpecation(counts)
+getExpectation <- function(counts, grouping=NULL, normalize=TRUE){
   if( inherits(counts, "SummarizedExperiment") || 
       inherits(counts, "SingleCellExperiment") ){
     counts <- assay(counts, "counts")
@@ -40,9 +59,11 @@
   # compute expectation based on an average of group averages
   agcnt <- .fastColAgg(counts, grouping)
   if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
-  cs <- Matrix::colSums(agcnt)
-  agcnt <- .fastColNorm(agcnt, cs=cs)*median(cs)
-  if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
+  if(normalize){
+    cs <- Matrix::colSums(agcnt)
+    agcnt <- .fastColNorm(agcnt, cs=cs)*median(cs)
+    if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
+  }
   Matrix::rowMeans(agcnt)
 }
 

@@ -101,7 +101,7 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
          "have zero counts. Please remove them.")
   
   # global profile  
-  expectation2 <- expectation <- .get_expectation(counts, grouping)
+  expectation2 <- expectation <- getExpectation(counts, grouping)
   peak_p <- expectation / sum(expectation)
   
   # bias bins

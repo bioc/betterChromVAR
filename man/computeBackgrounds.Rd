@@ -31,7 +31,7 @@ colData column of \code{object} can also be provided.)}
 
 \item{expectation}{Optional vector of length equal to \code{nrow(object)}
 giving the expected counts. If NULL, defaults to mean counts (eventually
-grouped, see \code{grouping}).}
+grouped, see \code{grouping} and \code{\link{getExpectation}}).}
 
 \item{shrinkage}{The method to use to shrink background (i.e. bias) bin
 frequencies. Either "average" (shrinks towards the bin's average across

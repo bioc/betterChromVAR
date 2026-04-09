@@ -13,7 +13,7 @@
 #'   colData column of `object` can also be provided.)
 #' @param expectation Optional vector of length equal to `nrow(object)` 
 #'   giving the expected counts. If NULL, defaults to mean counts (eventually
-#'   grouped, see `grouping`).
+#'   grouped, see `grouping` and \code{\link{getExpectation}}).
 #' @param shrinkage The method to use to shrink background (i.e. bias) bin 
 #'   frequencies. Either "average" (shrinks towards the bin's average across 
 #'   cells/samples of the same group), "smooth" (per-sample 2D smoothing over
@@ -68,7 +68,12 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
   if(is.null(depth)) depth <- colSums(counts)
 
   if(is.null(expectation)){
-    expectation <- .get_expectation(counts, grouping)
+    if(length(bins@expectation)==nrow(counts)){
+      if(verbose) message("Using pre-computed expectation")
+      expectation <- bins@expectation
+    }else{
+      expectation <- getExpectation(counts, grouping)
+    }
   }
   if(any(expectation==0)){
     stop("Some peaks have an expectation of zero, most likely because they ",

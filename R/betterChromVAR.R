@@ -83,7 +83,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
   grouping <- .groupingInput(grouping, object, TRUE)
   
   if(verbose) message("Preparing bias bins")
-  expectation <- .get_expectation(object, grouping)
+  expectation <- getExpectation(object, grouping)
   bg <- getBackgroundBins(expectation, bias=bias, flbias=flbias, 
                           verbose=verbose, ...)
   

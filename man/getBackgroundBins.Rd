@@ -16,7 +16,7 @@ getBackgroundBins(
 }
 \arguments{
 \item{x}{A SummarizedExperiment containing a 'counts' assay, or a matrix of
-counts, or a vector of log10-transformed expectations.}
+counts, or a vector of expected (e.g. mean) counts.}
 
 \item{bias}{A vector of length equal to \code{ncol(object)} specifying the
 per-peak bias (i.e. GC content). If omitted, will try to get it
