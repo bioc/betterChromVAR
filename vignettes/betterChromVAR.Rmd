@@ -238,7 +238,7 @@ bg <- getBackgroundBins(ex, bias=rowData(counts)$bias)
 ```
 Then we can apply the next steps only on subset of the data:
 
-```{r computeBackgrounds}
+```{r chunkCompute}
 bg2 <- computeBackgrounds(counts[,1:3], bg, expectation = ex)
 dev2 <- computeDeviationsAnalytic(counts[,1:3], bg2, motifMatches)
 # this should be identical to what we had run on the whole object:
