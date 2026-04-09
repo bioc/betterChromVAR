@@ -46,7 +46,7 @@
 #'
 #' @examples
 #' attach(getDummyData())
-#' e <- getExpecation(counts)
+#' e <- getExpectation(counts)
 getExpectation <- function(counts, grouping=NULL, normalize=TRUE){
   if( inherits(counts, "SummarizedExperiment") || 
       inherits(counts, "SingleCellExperiment") ){
