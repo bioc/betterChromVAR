@@ -193,7 +193,8 @@ jobs:
 
       - name: Set BiocVersion
         run: |
-          BiocManager::install(version = "${{ matrix.config.bioc }}", ask = FALSE, force = TRUE)
+          is_win <- .Platform$OS.type == "windows"
+          BiocManager::install(version = "${{ matrix.config.bioc }}", ask = FALSE, force = TRUE, update = !is_win)
         shell: Rscript {0}
 
       - name: Install dependencies pass 1
