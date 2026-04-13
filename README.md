@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 
-<--!
+<!--
 [![GitHub
 issues](https://img.shields.io/github/issues/plger/betterChromVAR)](https://github.com/plger/betterChromVAR/issues)
 [![GitHub
