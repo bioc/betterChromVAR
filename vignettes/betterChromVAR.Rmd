@@ -28,7 +28,8 @@ and colleagues from the Greenleaf lab [@schep2017chromvar].
 Although originally designed for single-cell ATAC-seq data, it has been shown 
 to be highly sensitive for bulk data as well [@gerbaldo2024identification]. The 
 aim of the method is to infer, based on the accessibility of motif matches, the 
-relative activity of transcription factors (TFs) in each sample or cell. It is 
+relative activity of transcription factors (TFs) in each sample or cell,
+adjusting for technical biases (GC content and enrichment bias). It is 
 recommended that you read the `r Biocpkg("chromVAR")` documentation before 
 using this package.
 
@@ -41,7 +42,10 @@ bias bins, instead of in the peak-space.
 
 In addition, `r Biocpkg("betterChromVAR")` included a few additions, such as 
 simpler weighted expectations, bias shrinkage, and an ATAC-seq normalization 
-method based on the chromVAR logic.
+method based on the chromVAR logic. Importantly, however, not all 
+functionalities of chromVAR have been reimplemented here: 
+`r Biocpkg("betterChromVAR")` chiefly focuses on the key task of efficiently 
+computing motif deviations.
 
 
 ## Installing `betterChromVAR`
@@ -69,23 +73,25 @@ across cells or samples, and 2) an annotation of which TFs/motifs match which
 peak^[The annotation can be binary or probabilistic (i.e. from 0 to 1). If using 
 motif matches, however, it is recommended to input binary matches, as the 
 magnitude of motif scores is generally poorly correlated to actual binding.]. 
-Both can be provided as matrices or, better, as `RangedSummarizedExperiment` 
-objects^[See `r Biocpkg("SummarizedExperiment")` if you're not familiar with 
-those].
+The peak counts should be provided as a `RangedSummarizedExperiment` 
+object^[See `r Biocpkg("SummarizedExperiment")` if you're not familiar with 
+those], while the annotation can either be in that format too or provided as a 
+(sparse) matrix.
 
 There are multiple ways of generating your peak counts; the original 
-`r Biocpkg("chromVAR")` package includes such a function (`getCounts()`), and the 
-`r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package has some with more 
+`r Biocpkg("chromVAR")` package includes such a function (`getCounts()`), and 
+the `r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package has some with more 
 options (functions `peakCountsFromBAM()` and `peakCountsFromFrags()`). Similarly, 
 the `r Biocpkg("motifmatchr")` package can be used to generate the motif 
 matching annotation. An important consideration is that the peaks or regions 
 used for the purpose of this analysis should have similar widths. It is thus 
 highly recommended, before generating the count and annotation matrices, to 
-resize your regions (e.g. using `peaks <- resize(peaks, width=300, fix="center")`) 
--- the exact size can be something not too large (otherwise the presence/absence 
-of a motif becomes meaningless) and ideally close to the median size of your 
-original peaks. In addition, is it advisable to restrict your peaks to those 
-that are on standard chromosomes^[See `keepStandardChromosomes()` from the 
+resize your regions (e.g. using 
+`peaks <- resize(peaks, width=300, fix="center")`). The exact size can be 
+something not too large (otherwise the presence/absence of a motif becomes 
+meaningless) and ideally close to the median size of your original peaks. In 
+addition, is it advisable to restrict your peaks to those that are on standard 
+chromosomes^[See `keepStandardChromosomes()` from the 
 `r Biocpkg("GenomeInfoDb")` package].
 
 Here we'll use dummy data as example:
@@ -189,7 +195,7 @@ dev <- computeDeviationsAnalytic(counts, background=bg, annotations=motifMatches
 dev
 ```
 
-This last call could be made with different annotations, without needed to 
+This last call could be made with different annotations, without needing to 
 recompute the previous steps.
 
 
