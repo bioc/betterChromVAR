@@ -40,7 +40,7 @@ Contrarily to the original chromVAR, it is entirely deterministic, and achieves
 much higher efficiency by computing expectations and variance at the level of 
 bias bins, instead of in the peak-space.
 
-In addition, `r Biocpkg("betterChromVAR")` included a few additions, such as 
+In addition, `r Biocpkg("betterChromVAR")` includes a few additions, such as 
 simpler weighted expectations, bias shrinkage, and an ATAC-seq normalization 
 method based on the chromVAR logic. Importantly, however, not all 
 functionalities of chromVAR have been reimplemented here: 
@@ -113,7 +113,7 @@ indicating the GC content of the regions:
 rowData(counts)
 ```
 
-Had this not been the case, we would first need to add is using:
+Had this not been the case, we would first need to add this using:
 
 ```{r addGCBias, eval=FALSE}
 # not run
@@ -171,8 +171,8 @@ The `betterChromVAR()` function is actually a wrapper around three steps, which
 can also be executed individually for more customization, or to avoid repeating 
 some computation multiple times.
 
-The first step is creating the bias bin and their pairwise sampling probabilities.
-This is achieve with:
+The first step is creating the bias bins and their pairwise sampling 
+probabilities. This is achieved with:
 
 ```{r getBackgroundBins}
 bg <- getBackgroundBins(counts)
