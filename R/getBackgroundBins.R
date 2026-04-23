@@ -60,8 +60,7 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   }else if(is.matrix(x) || is(x, "Matrix")){
     x <- rowMeans(x)
   }
-  if(is.null(bias)){
-    stopifnot("`bias` not provided, and not found in the object.")
+  if(is.null(bias)) stop("`bias` not provided, and not found in the object.")
   stopifnot(length(bias)==nrow(x))
   
   if(!is.null(flbias)){
