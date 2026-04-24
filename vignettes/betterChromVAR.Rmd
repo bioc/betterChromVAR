@@ -292,11 +292,13 @@ anymore), so that it is amenable to use in downstream count-based analysis
 methods such as `r Biocpkg("edgeR")`.
 
 
-# References
+# Appendix
+
+## References
 
 <div id="refs"></div>
 
-# Session info
+## Session info
 
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()
