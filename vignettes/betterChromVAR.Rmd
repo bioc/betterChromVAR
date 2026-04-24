@@ -21,7 +21,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}  
 ---
 
-## Introduction
+# Introduction
 
 The `r Biocpkg("chromVAR")` R package was originally developed by Alicia Schep 
 and colleagues from the Greenleaf lab [@schep2017chromvar].
@@ -48,7 +48,7 @@ functionalities of chromVAR have been reimplemented here:
 computing motif deviations.
 
 
-## Installing `betterChromVAR`
+# Installing `betterChromVAR`
 
 `r Biocpkg("betterChromVAR")` is a `R` package available via the 
 [Bioconductor](http://bioconductor.org) repository. It can be installed using
@@ -66,7 +66,7 @@ BiocManager::valid()
 ```
 
 
-## Computing motif deviations with betterChromVAR
+# Computing motif deviations with betterChromVAR
 
 `r Biocpkg("betterChromVAR")` takes two primary inputs: 1) the counts in peaks 
 across cells or samples, and 2) an annotation of which TFs/motifs match which 
@@ -134,7 +134,7 @@ The resulting `dev` object is a SummarizedExperiment with the same columns
 (and colData) as the original `counts` object, but with the motifs as rows 
 (instead of the original peaks). The values can be interpreted as the relative 
 activity, across samples or cells, of the corresponding TFs^[Note, however, 
-that similar motifs will be given similar activity estimations, so that it is 
+that similar motifs will be given similar activity estimates, so that it is 
 often hard to know which of a set of highly-similar motifs is in fact 
 responsible for the observed signal.]. When the function is used with default 
 arguments, the results are virtually the same as the original chromVAR 
@@ -165,7 +165,7 @@ one can simply use the `computeVariability` function of `r Biocpkg("chromVAR")`
 on the present output (i.e. `dev`).
 
 
-### Individual steps of betterChromVAR
+## Individual steps of betterChromVAR
 
 The `betterChromVAR()` function is actually a wrapper around three steps, which 
 can also be executed individually for more customization, or to avoid repeating 
@@ -199,7 +199,7 @@ This last call could be made with different annotations, without needing to
 recompute the previous steps.
 
 
-### Including fragment length bias
+## Including fragment length bias
 
 In addition to the enrichment and GC bias taken into account by the original 
 `r Biocpkg("chromVAR")`, `r Biocpkg("betterChromVAR")` supports an optional 
@@ -210,7 +210,7 @@ desired, we recommended using the counting functions from the
 `r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package, which can provide this
 information.
 
-### Note on single-cell data
+## Note on single-cell data
 
 If you are using betterChromVAR (or ChromVAR, for that matter) on single-cell 
 data with multiple cell types, the way to best run it depends on whether your 
@@ -227,7 +227,7 @@ in the given cell type, leading to better capture of the bias. The drawback,
 however, is that the values won't be comparable across cell types. To test 
 across conditions, we also recommend using it on pseudobulk data.
 
-#### Execution on Atlas-scale datasets
+### Execution on Atlas-scale datasets
 
 The only step of the process that needs to be done across the entire dataset is
 the computing of the expectation, i.e. the mean (or weighted mean) for each 
@@ -260,7 +260,7 @@ then use the `rowMeans()` of that as expectation.
 
 <br/><br/>
 
-## Bias-normalization of bulk ATAC-seq data
+# Bias-normalization of bulk ATAC-seq data
 
 The general chromVAR approach, and in particular the deterministic version 
 implemented here, is also amenable to be used to normalize GC- and enrichment 
@@ -292,11 +292,11 @@ anymore), so that it is amenable to use in downstream count-based analysis
 methods such as `r Biocpkg("edgeR")`.
 
 
-## References
+# References
 
 <div id="refs"></div>
 
-## Session info
+# Session info
 
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()
