@@ -81,7 +81,7 @@ computeDeviationsAnalytic <- function(object, background, annotations,
                               dims=c(nrow(binBinProbs), length(binMap)))
   
   # motif-level background stats (M x S)
-  motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
+  motifBinCounts <- t(bin2peakMat %*% annotations)
   motif_bg_exp <- as.matrix(motifBinCounts %*% background@E)
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
   
