@@ -46,6 +46,7 @@
 #' @importFrom SummarizedExperiment assay rowData
 #' @importFrom matrixStats colMins colMaxs
 #' @importFrom methods as is new
+#' @importFrom Matrix drop0
 #' @export
 #' @examples
 #' counts_se <- getDummyData()$counts
