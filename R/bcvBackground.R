@@ -1,6 +1,8 @@
 #' @importClassesFrom Matrix dgCMatrix sparseMatrix
 setClassUnion("AnyMatrixOrNULL",
-              c("matrix", "dgCMatrix", "sparseMatrix","NULL"))
+              c("matrix", "dgCMatrix", "dgeMatrix", "sparseMatrix","NULL"))
+setClassUnion("AnyMatrix",
+              c("matrix", "dgCMatrix", "dgeMatrix", "sparseMatrix"))
 
 #' Bin and background data for betterChromVAR (for internal use)
 #' @export
@@ -8,7 +10,7 @@ setClass("bcvBackground", slots = list(
                                      dims        = "integer",
                                      peak2bin    = "integer",
                                      binDensity  = "integer",
-                                     binBinProbs = "matrix",
+                                     binBinProbs = "AnyMatrix",
                                      E           = "AnyMatrixOrNULL",
                                      V           = "AnyMatrixOrNULL",
                                      expectation = "numeric",

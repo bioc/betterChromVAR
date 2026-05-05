@@ -115,14 +115,12 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
   }
   
   # bin-level expectations and variances (B x S)
-  E <- binBinProbs %*% binCounts
-  V <- as.matrix( ((bin2peakMat %*% (counts^2))/pmax(1, bins@binDensity))-
-                    ((E/pmax(1, bins@binDensity))^2) )
-  V[V < 0] <- 0
+  E <- (binBinProbs %*% binCounts)
+  di <- Diagonal(x = 1/pmax(1, bins@binDensity))
+  V <- (di %*% (bin2peakMat %*% (counts^2))) - (di %*% E)^2
+  V@x[which(V@x<0)] <- 0
+  V <- drop0(V)
   V <- binBinProbs %*% (V * bins@binDensity)
-  
-  if(is(E,"dgeMatrix")) E <- as.matrix(E)
-  if(is(V,"dgeMatrix")) V <- as.matrix(V)
   
   bins@E <- E
   bins@V <- V

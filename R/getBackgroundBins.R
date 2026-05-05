@@ -56,9 +56,9 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
       inherits(x, "SingleCellExperiment")) {
     if(is.null(bias)) bias <- rowData(x)$bias
     if(is.null(flbias)) flbias <- rowData(x)$flbias
-    x <- rowMeans(assay(x, "counts"))
+    x <- Matrix::rowMeans(assay(x, "counts"))
   }else if(is.matrix(x) || is(x, "Matrix")){
-    x <- rowMeans(x)
+    x <- Matrix::rowMeans(x)
   }
   if(is.null(bias)) stop("`bias` not provided, and not found in the object.")
   stopifnot(length(bias)==nrow(x))
@@ -127,15 +127,14 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   normalizer[normalizer < 1e-9] <- 1
   binBinProbs <- W/normalizer
   
-  tt <- table(binBinProbs>0)
-  if( (tt["TRUE"]/sum(tt)) < 0.2 )
-    binBinProbs <- as(binBinProbs, "sparseMatrix")
+  binBinProbs[binBinProbs < 1e-6] <- 0
+  binBinProbs <- as(binBinProbs, "sparseMatrix")
     
   new("bcvBackground",
       dims = bs,
       peak2bin = as.integer(peak2bin), 
       binDensity = binDensity, 
-      binBinProbs = as.matrix(binBinProbs),
+      binBinProbs = binBinProbs,
       E = NULL,
       V = NULL,
       expectation = numeric(), 
