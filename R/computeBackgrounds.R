@@ -122,6 +122,9 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
   V <- drop0(V)
   V <- binBinProbs %*% (V * bins@binDensity)
   
+  if(is(E,"dgeMatrix")) E <- as.matrix(E)
+  if(is(V,"dgeMatrix")) V <- as.matrix(V)
+  
   bins@E <- E
   bins@V <- V
   bins@expectation <- expectation
