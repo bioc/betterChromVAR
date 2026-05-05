@@ -102,7 +102,7 @@ betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
   
   i <- seq_len(ncol(object))
   counts <- assay(object, "counts")
-  if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 && ncol(counts>100)){
+  if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 && ncol(counts) > 100){
     if(verbose) message("Computing backgrounds and deviations")
     chunks <- split(i, cut(i, nW, labels=FALSE))
     res <- bplapply(chunks, BPPARAM=BPPARAM, function(i){
