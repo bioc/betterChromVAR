@@ -1,4 +1,5 @@
 library(BiocParallel)
+library(Matrix)
 set.seed(123)
 attach(getDummyData())
 counts$groups <- factor(rep(LETTERS[1:2], each=5))
@@ -15,6 +16,13 @@ test_that("betterChromVAR runs", {
   dev <- betterChromVAR(counts, motifMatches)
   checkDevOutput(dev)
 })
+
+test_that("dgcMatrix supported", {
+  assay(counts) <- as(assay(counts), "sparseMatrix")
+  dev <- betterChromVAR(counts, motifMatches)
+  checkDevOutput(dev)
+})
+
 
 bg <- getBackgroundBins(counts)
 
