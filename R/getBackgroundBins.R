@@ -102,7 +102,7 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   
   if(!is.null(flbias)){
     idx3 <- round((transMat[, 3] - minCoords[3]) /
-                    range_coords[2] * (bs[3] - 1)) + 1
+                    range_coords[3] * (bs[3] - 1)) + 1
     idx3 <- pmax(1, pmin(bs[3], idx3))
   }
   
