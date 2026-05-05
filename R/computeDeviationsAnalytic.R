@@ -18,6 +18,7 @@
 #'   or 'none' (denominator of 1). 'global' (default) is recommended.
 #'
 #' @returns A SummarizedExperiment (or a list if `retSE=FALSE`).
+#' @importFrom Matrix t crossprod tcrossprod
 #' @export
 #'
 #' @examples
@@ -81,7 +82,7 @@ computeDeviationsAnalytic <- function(object, background, annotations,
                               dims=c(nrow(binBinProbs), length(binMap)))
   
   # motif-level background stats (M x S)
-  motifBinCounts <- t(bin2peakMat %*% annotations)
+  motifBinCounts <- Matrix::t(bin2peakMat %*% annotations)
   motif_bg_exp <- as.matrix(motifBinCounts %*% background@E)
   observed_motif_sum <- as.matrix(Matrix::crossprod(annotations, counts))
   

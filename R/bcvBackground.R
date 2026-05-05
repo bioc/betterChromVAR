@@ -1,4 +1,4 @@
-#' @importClassesFrom Matrix dgCMatrix sparseMatrix
+#' @importClassesFrom Matrix dgCMatrix dgeMatrix sparseMatrix
 setClassUnion("AnyMatrixOrNULL",
               c("matrix", "dgCMatrix", "dgeMatrix", "sparseMatrix","NULL"))
 setClassUnion("AnyMatrix",
