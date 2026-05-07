@@ -30,7 +30,7 @@ popular [chromVAR](https://greenleaflab.github.io/chromVAR/) (Chromatin
 Variation Across Regions) method for computing cell- (or sample-) wise motif 
 deviations from ATAC-seq data and motif annotations. The functions 
 additionally have extra options and also include an ATAC-seq normalization 
-method based on the general chromVAR logic.
+method based on the general chromVAR logic. See the documentation [here](https://bioconductor.org/packages/devel/bioc/vignettes/betterChromVAR/inst/doc/betterChromVAR.html).
 
 We note that only the components of chromVAR used to compute motif deviations 
 were reimplemented here. On a dataset of ~31k cells, ~150k regions, and ~2k 
