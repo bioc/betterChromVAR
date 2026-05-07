@@ -64,6 +64,8 @@ getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
   if(is.null(bias)) stop("`bias` not provided, and not found in the object.")
   stopifnot(length(bias)==nrow(x))
   
+  stopifnot("Some peaks have zero counts; please remove them."=sum(x==0)==0)
+  
   if(!is.null(flbias)){
     if(is.null(bs)) bs <- c(30L, 30L, 6L)
     stopifnot(length(bs)==3)
