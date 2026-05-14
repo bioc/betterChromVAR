@@ -233,15 +233,16 @@ The only step of the process that needs to be done across the entire dataset is
 the computing of the expectation, i.e. the mean (or weighted mean) for each 
 region across all cells, and the creation of the background bins, which depends
 on it. Everything else can easily be executed in chunks (of cells), as is done 
-for multi-threading in the `betterChromVAR()` function. This can be done 
-manually on the full dataset, and then passed to downstream functions for 
-computations on subsets of the data:
+for multi-threading in the `betterChromVAR()` function.
+
+For example, only these functions need to be called on the full dataset :
 
 ```{r getExpectations}
 ex <- getExpectation(counts)
 bg <- getBackgroundBins(ex, bias=rowData(counts)$bias)
 # this is equivalent to bg <- getBackgroundBins(counts)
 ```
+
 Then we can apply the next steps only on subset of the data:
 
 ```{r chunkCompute}
@@ -251,12 +252,11 @@ dev2 <- computeDeviationsAnalytic(counts[,1:3], bg2, motifMatches)
 identical(assay(dev)[,1:3], assay(dev2))
 ```
 
-If data is on disk, rather than in memory, and you are adjusting the expectation
-based on cell-type abundance using the `grouping` argument, `getBackgroundBins` 
-will load the entire count matrix into memory. To avoid this, compute the 
-mean per group using block-wise operations, for instance using the 
-`aggregateAcrossCells()` function of the `r Biocpkg("scrapper")` package, and
-then use the `rowMeans()` of that as expectation.
+If data is on disk, rather than in memory (and you want it to stay that way), 
+make sure to use this procedure. In recent versions, `getExpectation()` should
+use chunk-based processing. However it is quite likely that better performance
+for this step would be obtained using for instance using the 
+`aggregateAcrossCells()` function of the `r Biocpkg("scrapper")` package.
 
 <br/><br/>
 

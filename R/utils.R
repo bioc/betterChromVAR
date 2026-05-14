@@ -44,6 +44,7 @@
 #' @returns A vector of expectation for each row of `counts`
 #' @export
 #'
+#' @importFrom DelayedMatrixStats rowMeans2
 #' @examples
 #' attach(getDummyData())
 #' e <- getExpectation(counts)
@@ -53,7 +54,7 @@ getExpectation <- function(counts, grouping=NULL, normalize=TRUE){
     counts <- assay(counts, "counts")
   }
   if(is.null(grouping) || length(unique(grouping))==1)
-    return(Matrix::rowMeans(counts))
+    return(DelayedMatrixStats::rowMeans2(counts))
   grouping <- factor(grouping)
   stopifnot(length(grouping)==ncol(counts))
   # compute expectation based on an average of group averages
@@ -64,7 +65,7 @@ getExpectation <- function(counts, grouping=NULL, normalize=TRUE){
     agcnt <- .fastColNorm(agcnt, cs=cs)*median(cs)
     if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
   }
-  Matrix::rowMeans(agcnt)
+  DelayedMatrixStats::rowMeans(agcnt)
 }
 
 
