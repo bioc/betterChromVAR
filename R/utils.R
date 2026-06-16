@@ -65,7 +65,7 @@ getExpectation <- function(counts, grouping=NULL, normalize=TRUE){
     agcnt <- .fastColNorm(agcnt, cs=cs)*median(cs)
     if(is(agcnt, "dgeMatrix")) agcnt <- as.matrix(agcnt)
   }
-  DelayedMatrixStats::rowMeans(agcnt)
+  DelayedMatrixStats::rowMeans2(agcnt)
 }
 
 
