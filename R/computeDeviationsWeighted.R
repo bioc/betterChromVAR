@@ -88,7 +88,7 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   motif_bg_exp_unweighted <- as.matrix(motifBinCounts %*% bg@E)
   unwMoCounts <- as.matrix(Matrix::t(annotations) %*% unweightedPeakCounts)
   unwMoCounts <- Matrix::rowMeans(.fastColNorm(unwMoCounts))*sum(unwMoCounts)
-  fg <- sum(weightedMotifCounts)*rowMeans(.fastColNorm(weightedMotifCounts))
+  fg <- sum(weightedMotifCounts)*Matrix::rowMeans(.fastColNorm(weightedMotifCounts))
   motif_sf <- fg / unwMoCounts
   motif_bg_exp <- motif_bg_exp_unweighted * motif_sf
   
