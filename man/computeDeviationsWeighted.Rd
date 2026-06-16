@@ -57,7 +57,7 @@ dev1 <- computeDeviationsWeighted(motifCounts, counts, motifMatches)
 dev1
 # in this case, the results are identical to :
 dev2 <- betterChromVAR(counts, motifMatches)
-stopifnot(identical(assays(dev), assays(test)))
+stopifnot(identical(assays(dev1), assays(dev2)))
 }
 \seealso{
 \code{\link[=computeDeviationsAnalytic]{computeDeviationsAnalytic()}}

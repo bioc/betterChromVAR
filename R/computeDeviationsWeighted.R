@@ -37,7 +37,7 @@
 #' dev1
 #' # in this case, the results are identical to :
 #' dev2 <- betterChromVAR(counts, motifMatches)
-#' stopifnot(identical(assays(dev), assays(test)))
+#' stopifnot(identical(assays(dev1), assays(dev2)))
 computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
                                       annotations, bg=NULL, retSE=TRUE, ...){
   stopifnot(ncol(weightedMotifCounts)==ncol(unweightedPeakCounts))
