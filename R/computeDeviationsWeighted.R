@@ -54,7 +54,7 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
     if(length(bg@depth)==0 || length(bg@expectation)==0)
       stop("Incomplete background; please run computeBackgrounds() first.")
     if( (length(bg@depth)!=ncol(weightedMotifCounts)) ||
-        (length(background@expectation)!=nrow(unweightedPeakCounts)) )
+        (length(bg@expectation)!=nrow(unweightedPeakCounts)) )
       stop("The `background` object does not match the other objects' dimensions.")
   }
   
