@@ -11,8 +11,6 @@
 #' @param unweightedPeakCounts A matrix of unweighted counts per peak (rows) and 
 #'   sample (columns), or a `SummarizedExperiment` containing this as first 
 #'   assay.
-#' @param bias The (GC) bias for each row of `unweightedPeakCounts`. If missing,
-#'   will try to find it in `bg` or in `rowData(unweightedPeakCounts)`.
 #' @param annotations Peak annotation (sparse) matrix, with motifs as columns,
 #'    or a SummarizedExperiment containing this in the first assay. Values 
 #'    should be either logical or between 0 and 1.
@@ -20,6 +18,7 @@
 #'   as produced by \code{\link{computeBackgrounds}}, or a 
 #'   `SummarizedExperiment` of background peak counts (with bias data in 
 #'   `rowData`). If missing, will be created based on `unweightedPeakCounts`.
+#' @param retSE Logical; whether to return a SummarizedExperiment object.
 #' @param ... Passed to \link{getBackgroundBins} (can for instance be used to
 #'   pass bias info if not contained in the objects). Ignored if `bg` is a
 #'   \code{\link[betterChromVAR]{bcvBackground-class}} object.
@@ -88,7 +87,7 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   motifBinCounts <- Matrix::t(annotations) %*% Matrix::t(bin2peakMat)
   motif_bg_exp_unweighted <- as.matrix(motifBinCounts %*% bg@E)
   unwMoCounts <- as.matrix(Matrix::t(annotations) %*% unweightedPeakCounts)
-  unwMoCounts <- rowMeans(.fastColNorm(unwMoCounts))*sum(unwMoCounts)
+  unwMoCounts <- Matrix::rowMeans(.fastColNorm(unwMoCounts))*sum(unwMoCounts)
   fg <- sum(weightedMotifCounts)*rowMeans(.fastColNorm(weightedMotifCounts))
   motif_sf <- fg / unwMoCounts
   motif_bg_exp <- motif_bg_exp_unweighted * motif_sf

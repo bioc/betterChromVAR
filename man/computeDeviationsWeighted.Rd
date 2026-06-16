@@ -31,12 +31,11 @@ as produced by \code{\link{computeBackgrounds}}, or a
 \code{SummarizedExperiment} of background peak counts (with bias data in
 \code{rowData}). If missing, will be created based on \code{unweightedPeakCounts}.}
 
+\item{retSE}{Logical; whether to return a SummarizedExperiment object.}
+
 \item{...}{Passed to \link{getBackgroundBins} (can for instance be used to
 pass bias info if not contained in the objects). Ignored if \code{bg} is a
 \code{\link[betterChromVAR]{bcvBackground-class}} object.}
-
-\item{bias}{The (GC) bias for each row of \code{unweightedPeakCounts}. If missing,
-will try to find it in \code{bg} or in \code{rowData(unweightedPeakCounts)}.}
 }
 \value{
 A SummarizedExperiment (or a list if \code{retSE=FALSE}).
