@@ -4,12 +4,12 @@
 #' multidimensional bias space. This is inpsired by Ruochi Zhang's approach in
 #' scPrinter.
 #' 
-#' @param x A SummarizedExperiment containing a 'counts' assay, or a matrix of 
+#' @param se A SummarizedExperiment containing a 'counts' assay, or a matrix of 
 #'   counts.
 #' @param expectation A vector of expectations. If NULL, will use the mean 
-#'   counts of `x`
+#'   counts of `se`
 #' @param bias A data.frame of sources of bias (beside `expectation`) to 
-#'   consider (one per column), with the same nrow as `x`.
+#'   consider (one per column), with the same nrow as `se`.
 #' @param k Number of nearest neighbors to use.
 #' @param pseudo Pseudocount for log transformation.
 #' @param weights How to weigh the different bias dimensions. If "none", they
@@ -19,9 +19,11 @@
 #' @param ... Passed to \code{\link[BiocNeighbors]{findKNN}}. 
 #' 
 #' @return A sparse peak-by-peak kNN matrix.
-#' @importFrom stats cov lm poly
+#' @importFrom stats cov lm poly cor setNames
 #' @importFrom Matrix sparseMatrix rowMeans
 #' @importFrom BiocNeighbors findKNN
+#' @importFrom sparseMatrixStats rowVars
+#' @importFrom MatrixGenerics rowMeans2
 #' @export
 #' @examples
 #' SE <- getDummyData()$counts

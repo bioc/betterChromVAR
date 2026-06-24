@@ -15,11 +15,14 @@ getBackgroundKNN(
 )
 }
 \arguments{
+\item{se}{A SummarizedExperiment containing a 'counts' assay, or a matrix of
+counts.}
+
 \item{expectation}{A vector of expectations. If NULL, will use the mean
-counts of \code{x}}
+counts of \code{se}}
 
 \item{bias}{A data.frame of sources of bias (beside \code{expectation}) to
-consider (one per column), with the same nrow as \code{x}.}
+consider (one per column), with the same nrow as \code{se}.}
 
 \item{k}{Number of nearest neighbors to use.}
 
@@ -31,9 +34,6 @@ are weighted by absolute Pearson correlation with the over-dispersion.}
 \item{pseudo}{Pseudocount for log transformation.}
 
 \item{...}{Passed to \code{\link[BiocNeighbors]{findKNN}}.}
-
-\item{x}{A SummarizedExperiment containing a 'counts' assay, or a matrix of
-counts.}
 }
 \value{
 A sparse peak-by-peak kNN matrix.

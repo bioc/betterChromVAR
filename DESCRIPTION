@@ -26,6 +26,8 @@ Imports:
     IRanges,
     Matrix,
     matrixStats,
+    sparseMatrixStats,
+    MatrixGenerics,
     methods,
     S4Vectors,
     stats

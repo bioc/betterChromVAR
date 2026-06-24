@@ -69,7 +69,6 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=0.1,
       
       # convert NN to triplet format
       idx_mat <- Matrix::summary(W)
-      print(head(idx_mat))
       x <- idx_mat[,3]
       idx_mat <- as.matrix(idx_mat[,1:2])
       
