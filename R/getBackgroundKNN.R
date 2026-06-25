@@ -13,9 +13,9 @@
 #' @param k Number of nearest neighbors to use.
 #' @param pseudo Pseudocount for log transformation.
 #' @param weights How to weigh the different bias dimensions. If "none", they
-#'   will not be re-weighted. If 'poly' (default), they are weighted by the R^2
-#'   of a 2nd degree polynomial fit of the over-dispersion. If 'linear', they 
-#'   are weighted by absolute Pearson correlation with the over-dispersion.
+#'   will not be re-weighted. If 'linear' (default), they are weighted by the
+#'   absolute Pearson correlation with the over-dispersion. If "poly", by the 
+#'   R^2 of a 2nd degree polynomial fit of the over-dispersion.
 #' @param ... Passed to \code{\link[BiocNeighbors]{findKNN}}. 
 #' 
 #' @return A sparse peak-by-peak kNN matrix.
@@ -29,7 +29,7 @@
 #' SE <- getDummyData()$counts
 #' bg <- getBackgroundKNN(SE)
 getBackgroundKNN <- function(se, expectation=NULL, bias=NULL, k=50,
-                                    weights=c("poly","linear","none"), 
+                                    weights=c("linear","poly","none"), 
                                     pseudo=0.1, ...){
   weights <- match.arg(weights)
   stopifnot(inherits(se, "SummarizedExperiment") ||

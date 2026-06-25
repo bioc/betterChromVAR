@@ -9,7 +9,7 @@ getBackgroundKNN(
   expectation = NULL,
   bias = NULL,
   k = 50,
-  weights = c("poly", "linear", "none"),
+  weights = c("linear", "poly", "none"),
   pseudo = 0.1,
   ...
 )
@@ -27,9 +27,9 @@ consider (one per column), with the same nrow as \code{se}.}
 \item{k}{Number of nearest neighbors to use.}
 
 \item{weights}{How to weigh the different bias dimensions. If "none", they
-will not be re-weighted. If 'poly' (default), they are weighted by the R^2
-of a 2nd degree polynomial fit of the over-dispersion. If 'linear', they
-are weighted by absolute Pearson correlation with the over-dispersion.}
+will not be re-weighted. If 'linear' (default), they are weighted by the
+absolute Pearson correlation with the over-dispersion. If "poly", by the
+R^2 of a 2nd degree polynomial fit of the over-dispersion.}
 
 \item{pseudo}{Pseudocount for log transformation.}
 
