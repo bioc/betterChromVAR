@@ -53,7 +53,7 @@ getBackgroundKNN <- function(se, expectation=NULL, bias=NULL, k=50,
   if(weights!="none"){
     overd <- sparseMatrixStats::rowVars(assay(se)) / (expectation + 1e-6)
     overd <- log10(overd + pseudo)
-    if(weights=="abscor"){
+    if(weights=="linear"){
       weights <- abs(cor(transMat, overd))
     }else{
       weights <- unlist(apply(transMat, 2, simplify=FALSE, FUN=\(x){
