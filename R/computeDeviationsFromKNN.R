@@ -58,7 +58,7 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=0.1,
   nMotifs <- ncol(annotations)
   
   # W is M x N
-  W <- as(Matrix::t(annotations), "dgCMatrix")
+  W <- as(Matrix::t(annotations), "dMatrix")
   k <- Matrix::rowSums(cBg)
   
   if(!is.null(l) && l < 1) {
