@@ -51,8 +51,12 @@ getBackgroundKNN <- function(se, expectation=NULL, bias=NULL, k=50,
   transMat <- t(forwardsolve(t(chol(cv)), t(bias)))
 
   if(weights!="none"){
-    overd <- sparseMatrixStats::rowVars(assay(se)) / (expectation + 1e-6)
-    overd <- log10(overd + pseudo)
+    if(is(assay(se), "dgeMatrix")){
+      rvar <- sparseMatrixStats::rowVars(as.matrix(assay(se)))
+    }else{
+      rvar <- sparseMatrixStats::rowVars(assay(se))
+    }
+    overd <- log10(rvar/(expectation+1e-6) + pseudo)
     if(weights=="linear"){
       weights <- abs(cor(transMat, overd))
     }else{
