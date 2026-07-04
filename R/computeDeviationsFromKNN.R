@@ -1,8 +1,8 @@
 #' computeDeviationsFromKNNbg
 #' 
 #' Computes analytical deviations using a nearest-neighbor background matrix 
-#' while excluding peaks containing the target motif from its own background 
-#' pool.
+#' while optionally excluding peaks containing the target motif from its own 
+#' background pool.
 #' 
 #' @param object A SummarizedExperiment or sparse matrix of counts.
 #' @param cBg The peak-by-peak sparse kNN matrix, as produced by 
@@ -11,8 +11,9 @@
 #'    or a SummarizedExperiment containing this in the first assay. Values 
 #'    should be either logical or between 0 and 1.
 #' @param l Lambda parameter determining the weight by which background peaks
-#'   containing the foreground motif are scaled in relative importance (default
-#'   0.1). Set to 0 to exclude them entirely, and to 1 to treat them normally.
+#'   containing the foreground motif are scaled in relative importance. Set to 1
+#'   to to treat them normally (default), to 0 to exclude them entirely 
+#'   (potentially unstable, a small value such as `0.1` is instead recommended).
 #' @param chunkSize Number of cells to process simultaneously. Increasing this
 #'   will increase speed, but also memory consumption.
 #' @param verbose Logical; whether to print progress messages.
@@ -34,8 +35,8 @@
 #' dev <- computeDeviationsFromKNN(object=counts, cBg=bg,
 #'                                 annotations=motifMatches)
 #' dev
-computeDeviationsFromKNN <- function(object, cBg, annotations, l=0.1, 
-                                        chunkSize=1000, verbose=TRUE){
+computeDeviationsFromKNN <- function(object, cBg, annotations, l=1, 
+                                     chunkSize=1000, verbose=TRUE){
   stopifnot(nrow(object) == nrow(annotations))
   stopifnot(l>=0 & l<=1)
   

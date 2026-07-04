@@ -8,7 +8,7 @@ computeDeviationsFromKNN(
   object,
   cBg,
   annotations,
-  l = 0.1,
+  l = 1,
   chunkSize = 1000,
   verbose = TRUE
 )
@@ -24,8 +24,9 @@ or a SummarizedExperiment containing this in the first assay. Values
 should be either logical or between 0 and 1.}
 
 \item{l}{Lambda parameter determining the weight by which background peaks
-containing the foreground motif are scaled in relative importance (default
-0.1). Set to 0 to exclude them entirely, and to 1 to treat them normally.}
+containing the foreground motif are scaled in relative importance. Set to 1
+to to treat them normally (default), to 0 to exclude them entirely
+(potentially unstable, a small value such as \code{0.1} is instead recommended).}
 
 \item{chunkSize}{Number of cells to process simultaneously. Increasing this
 will increase speed, but also memory consumption.}
@@ -37,8 +38,8 @@ A SummarizedExperiment with 'deviations' and 'z' assays.
 }
 \description{
 Computes analytical deviations using a nearest-neighbor background matrix
-while excluding peaks containing the target motif from its own background
-pool.
+while optionally excluding peaks containing the target motif from its own
+background pool.
 }
 \details{
 This method combines the analytic strategy used by \code{betterChromVAR} with
