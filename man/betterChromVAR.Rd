@@ -48,8 +48,6 @@ This is a wrapper around the \code{\link{getBackgroundBins}},
 \code{\link{computeBackgrounds}}, and \code{\link{computeDeviationsAnalytic}}
 steps. It additionally allows for multithreading. For more control or
 optimization, see the individual steps.
-A fast, analytic implementation of \code{chromVAR}'s \code{computeDeviations}, with
-additional features.
 }
 \details{
 Contrarily to the original chromVAR, this function is entirely deterministic,

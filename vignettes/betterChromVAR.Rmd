@@ -38,9 +38,9 @@ this package.
 faster, analytical re-implementation of the original method (it is also
 considerably faster than the C++ reimplementation in ArchR
 [@granja2021archr]. Contrarily to the original chromVAR, it is entirely
-deterministic, and achieves much higher efficiency by computing
-expectations and variance at the level of bias bins, instead of in the
-peak-space.
+deterministic, and achieves much higher efficiency by replacing permutations 
+with an analytical solution and computing expectations and variance at the 
+level of bias bins, instead of in the peak-space.
 
 In addition, `r Biocpkg("betterChromVAR")` includes a few additions,
 such as simpler weighted expectations, bias shrinkage, and an ATAC-seq
@@ -172,9 +172,9 @@ rowData of the object :
 rowData(dev)
 ```
 
-If bootstrap confidence intervals of the variability are additionally
-desired, one can simply use the `computeVariability` function of
-`r Biocpkg("chromVAR")` on the present output (i.e. `dev`).
+Note that the confidence interval is based on analytic estimates; if bootstrap 
+confidence intervals (as in the original approach) are needed, see the 
+`computeMotifVariability()` function.
 
 ## Individual steps of betterChromVAR
 

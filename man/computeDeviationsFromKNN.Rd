@@ -34,7 +34,9 @@ will increase speed, but also memory consumption.}
 \item{verbose}{Logical; whether to print progress messages.}
 }
 \value{
-A SummarizedExperiment with 'deviations' and 'z' assays.
+A SummarizedExperiment with 'deviations' and 'z' assays. If overall
+motif variability and their significance are additionally needed, see
+\code{\link{computeMotifVariability}}.
 }
 \description{
 Computes analytical deviations using a nearest-neighbor background matrix

@@ -25,7 +25,9 @@
 #' by `l`) peaks harboring the tested motif from the corresponding motif's 
 #' background.
 #' 
-#' @return A SummarizedExperiment with 'deviations' and 'z' assays.
+#' @return A SummarizedExperiment with 'deviations' and 'z' assays. If overall
+#'   motif variability and their significance are additionally needed, see 
+#'   \code{\link{computeMotifVariability}}.
 #' 
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export

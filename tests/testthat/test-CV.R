@@ -61,3 +61,24 @@ test_that("Sampling background peaks works", {
   bg_peaks <- sampleBackgroundPeaks(background, niterations=10)
   expect_all_true(dim(bg_peaks)==c(nrow(counts), 10L))
 })
+
+
+set.seed(123)
+z <- matrix(rnorm(mean=rnorm(10), sd=runif(10, max=2), 1000), nrow=10)
+
+compareVarDat <- function(x,y,isP=FALSE){
+  if(isP) return(1-cor(x,y))
+  mean(abs(x-y)/x)
+}
+
+test_that("computeMotifVariability works", {
+  v0 <- computeMotifVariability(z, confInt = 0.6)
+  v1 <- computeMotifVariability(z, confInt = 0.6, method="normal")
+  v2 <- computeMotifVariability(z, confInt = 0.6, method="bootstrap")
+  diff <- vapply(colnames(v0)[1:4], FUN.VALUE=numeric(2), \(x){
+    c(compareVarDat(v0[[x]], v1[[x]], grepl("pval", x)),
+      compareVarDat(v0[[x]], v2[[x]], grepl("pval", x)))
+  })
+  expect_all_true(as.numeric(diff)<0.05)
+})
+
