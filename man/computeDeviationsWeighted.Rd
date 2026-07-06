@@ -38,7 +38,9 @@ pass bias info if not contained in the objects). Ignored if \code{bg} is a
 \code{\link[betterChromVAR]{bcvBackground-class}} object.}
 }
 \value{
-A SummarizedExperiment (or a list if \code{retSE=FALSE}).
+A SummarizedExperiment (or a list if \code{retSE=FALSE}). If overall
+motif variability and their significance are additionally needed, see
+\code{\link{computeMotifVariability}}.
 }
 \description{
 A variant of \code{\link{computeDeviationsWeighted}} enabling the

@@ -5,8 +5,6 @@
 #' \code{\link{computeBackgrounds}}, and \code{\link{computeDeviationsAnalytic}}
 #' steps. It additionally allows for multithreading. For more control or 
 #' optimization, see the individual steps.
-#' A fast, analytic implementation of `chromVAR`'s `computeDeviations`, with
-#' additional features.
 #' 
 #' @param object A SummarizedExperiment (or SingleCellExperiment) with an assay
 #'    'counts', and with a 'bias' column in `rowData(object)`. Note that the 
@@ -124,12 +122,8 @@ betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
                                      retSE=FALSE, compute=c("deviations","z"))
   }
   
-  sd_deviations <- rowSds(res$z, na.rm=TRUE)
-  p_sd <- pchisq((ncol(counts) - 1) * (sd_deviations^2),
-                 df=(ncol(counts)-1), lower.tail = FALSE)
-  d <- data.frame(N=colSums(annotations), total=res$total,
-                  variability=sd_deviations, var.pval=p_sd,
-                  var.adjPval=p.adjust(p = p_sd, method = "BH"))
-  
+  d <- cbind(data.frame(N=colSums(annotations), total=res$total),
+             computeMotifVariability(res$z))
+
   .packageDevSE(res[1:2], object, motifCD, d)
 }

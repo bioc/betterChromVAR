@@ -23,7 +23,9 @@
 #'   pass bias info if not contained in the objects). Ignored if `bg` is a
 #'   \code{\link[betterChromVAR]{bcvBackground-class}} object.
 #'
-#' @returns A SummarizedExperiment (or a list if `retSE=FALSE`).
+#' @returns A SummarizedExperiment (or a list if `retSE=FALSE`). If overall
+#'   motif variability and their significance are additionally needed, see 
+#'   \code{\link{computeMotifVariability}}.
 #' @seealso [computeDeviationsAnalytic()]
 #' @export
 #' @examples

@@ -120,11 +120,7 @@ computeDeviationsAnalytic <- function(object, background, annotations,
                   total=rowSums(observed_motif_sum))
   
   if("variability" %in% compute){
-    sd_deviations <- rowSds(a$z, na.rm=TRUE)
-    p_sd <- pchisq((ncol(counts) - 1) * (sd_deviations^2),
-                   df=(ncol(counts)-1), lower.tail = FALSE)
-    d <- cbind(d, data.frame(variability=sd_deviations, var.pval=p_sd,
-                             var.adjPval=p.adjust(p = p_sd, method = "BH")))
+    d <- cbind(d, computeMotifVariability(a$z))
   }
   
   .packageDevSE(a, object, motifCD, d)
