@@ -216,8 +216,8 @@ original `r Biocpkg("chromVAR")`, `r Biocpkg("betterChromVAR")` supports
 an optional third dimension: fragment length bias (see
 `?getBackgroundBins()` for more information). This requires the
 compilation of an additional bias component (the log10-transformed mean
-or median fragment length per region). If desired, desired, we
-recommended using the counting functions from the
+or median fragment length per region). If this is desired, on option is to use 
+the counting functions from the
 `r Githubpkg("ETHZ-INS/epiwraps", "epiwraps")` package, which can
 provide this information.
 
@@ -332,11 +332,13 @@ bg <- getBackgroundKNN(counts)
 dev <- computeDeviationsFromKNN(counts, bg, motifMatches)
 ```
 
-We note, however, that this approach is considerably slower (although faster 
-than the original chromVAR), requires more memory, and produces more variable
-deviations across replicate cells. We therefore recommend its usage only when
-more complex multi-dimensional bias needs to be taken into account (see the 
-`bias` argument of `getBackgroundKNN()`).
+We note, however, that this approach is considerably slower (although still 
+substantially faster than the original chromVAR or the ArchR re-implementation),
+requires more memory, and, at the single-cell level, produces more variable 
+deviations across replicate cells.
+We therefore recommend using the more scalable bin-based variant, unless 
+working with bulk data with fragment length bias (or any other extra bias 
+dimensions, see the `bias` argument of `getBackgroundKNN()`).
 
 # Appendix
 
