@@ -324,8 +324,12 @@ the GPU).
 
 If a more complex multi-dimensional bias needs to be taken into account, 
 `r Biocpkg("betterChromVAR")` implements a similar algorithm that 
-combines our analytical framework with the kNN-based approach. This can for 
-instance be done in the following fashion:
+combines our analytical framework with the kNN-based approach. An additional 
+feature is that rather than taking the transformed bias space directly to 
+compute distances, we weight the different dimensions by their correlation with
+peak overdispersion.
+
+The kNN version of betterChromVAR can be used in the following way:
 
 ```{r}
 bg <- getBackgroundKNN(counts)
@@ -334,8 +338,8 @@ dev <- computeDeviationsFromKNN(counts, bg, motifMatches)
 
 We note, however, that this approach is considerably slower (although still 
 substantially faster than the original chromVAR or the ArchR re-implementation),
-requires more memory, and, at the single-cell level, produces more variable 
-deviations across replicate cells.
+requires more memory, and, at the single-cell level, produces slightly more 
+variable deviations across replicate cells.
 We therefore recommend using the more scalable bin-based variant, unless 
 working with bulk data with fragment length bias (or any other extra bias 
 dimensions, see the `bias` argument of `getBackgroundKNN()`).
