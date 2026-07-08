@@ -24,8 +24,8 @@ or a SummarizedExperiment containing this in the first assay. Values
 should be either logical or between 0 and 1.}
 
 \item{l}{Lambda parameter determining the weight by which background peaks
-containing the foreground motif are scaled in relative importance. Set to 1
-to to treat them normally (default), to 0 to exclude them entirely
+containing the foreground motif are scaled in relative importance. Set to
+1 to treat them normally (default), to 0 to exclude them entirely
 (potentially unstable, a small value such as \code{0.1} is instead recommended).}
 
 \item{chunkSize}{Number of cells to process simultaneously. Increasing this
