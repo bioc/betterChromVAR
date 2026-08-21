@@ -29,7 +29,7 @@ computeMotifVariability <- function(z, confInt=0.95, n=100,
   method <- match.arg(method)
   stopifnot(length(confInt)==1 && confInt>0 && confInt<1)
 
-  if(inherits(z, "SummarizedExperiment")){
+  if(.isSElike(z)){
     out <- computeMotifVariability(assay(z, "z"), confInt, method)
     rowData(z) <- cbind(
       rowData(z)[,setdiff(colnames(rowData(z)),colnames(out)),drop=FALSE], out)

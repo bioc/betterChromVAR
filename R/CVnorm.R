@@ -69,13 +69,12 @@ CVnorm <- function(object, bias=NULL, grouping=NULL, smoothGrouping=grouping,
   
   # input validity
   if(!isFALSE(useWidthAdj) && 
-     (!inherits(object, "SummarizedExperiment") || is.null(rowRanges(object))))
+     (!.isSElike(object) || is.null(rowRanges(object))))
     stop("The object does not contain rowRanges.",
          "Either include them, or set `useWidthAdj=FALSE`.")
 
   flbias <- wi <- NULL  
-  if (inherits(object, "SummarizedExperiment") || 
-      inherits(object, "SingleCellExperiment")) {
+  if(.isSElike(object)){
     if(is.null(bias)) bias <- rowData(object)$bias
     flbias <- rowData(object)$flbias
     if(is.null(useWidthAdj)){

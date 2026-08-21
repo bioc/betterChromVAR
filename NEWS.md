@@ -1,3 +1,6 @@
+# betterChromVAR 1.1.9
+* Fixed bug that some SE-like objects were not recognized as such
+
 # betterChromVAR 1.0.8
 * Added methods for kNN-based background
 

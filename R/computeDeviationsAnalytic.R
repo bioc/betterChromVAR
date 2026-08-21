@@ -51,8 +51,7 @@ computeDeviationsAnalytic <- function(object, background, annotations,
     stop("The `background` object does not match the dimensions of `object`.")
 
   motifCD <- depth <- NULL
-  if( inherits(object, "SummarizedExperiment") || 
-      inherits(object, "SingleCellExperiment") ){
+  if(.isSElike(object)){
     counts <- assay(object, "counts")
     if(is.numeric(object$depth)){
       if(verbose) message("Using pre-computed object$depth")
@@ -66,7 +65,7 @@ computeDeviationsAnalytic <- function(object, background, annotations,
     stop("`object` should be a SummarizedExperiment or SingleCellExperiment,",
          " or a (sparse) matrix of counts.")
   
-  if( inherits(annotations, "SummarizedExperiment") ){
+  if(.isSElike(annotations)){
     motifCD <- colData(annotations)
     annotations <- assay(annotations)
   } 

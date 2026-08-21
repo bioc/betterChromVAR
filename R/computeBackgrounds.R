@@ -43,8 +43,7 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
   shrinkage <- match.arg(shrinkage)
   stopifnot(is.null(expectation) || length(expectation)==nrow(object))
   depth <- NULL
-  if( inherits(object, "SummarizedExperiment") || 
-      inherits(object, "SingleCellExperiment") ){
+  if(.isSElike(object)){
     counts <- assay(object, "counts")
     if(is.numeric(object$depth)){
       if(verbose) message("Using pre-computed object$depth")

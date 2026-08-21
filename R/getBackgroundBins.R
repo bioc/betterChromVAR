@@ -53,8 +53,7 @@
 #' background <- getBackgroundBins(counts_se)
 getBackgroundBins <- function(x, bias=NULL, flbias=NULL, w=0.1, bs=NULL,
                               pseudo=0, verbose=TRUE){
-  if (inherits(x, "SummarizedExperiment") || 
-      inherits(x, "SingleCellExperiment")) {
+  if(.isSElike(x)){
     if(is.null(bias)) bias <- rowData(x)$bias
     if(is.null(flbias)) flbias <- rowData(x)$flbias
     x <- Matrix::rowMeans(assay(x, "counts"))

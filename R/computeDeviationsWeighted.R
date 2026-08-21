@@ -48,7 +48,7 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   if(is.null(bg)){
     bg <- computeBackgrounds(unweightedPeakCounts,
                              getBackgroundBins(unweightedPeakCounts, ...))
-  }else if(inherits(bg, "SummarizedExperiment")){
+  }else if(.isSElike(bg)){
     stopifnot(nrow(bg)==nrow(annotations) && 
                 ncol(bg)==ncol(weightedMotifCounts))
     bg <- computeBackgrounds(bg, getBackgroundBins(bg, ...))
@@ -67,13 +67,11 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   }
   .checkAnnotations(annotations)
   
-  if( inherits(weightedMotifCounts, "SummarizedExperiment") || 
-      inherits(weightedMotifCounts, "SingleCellExperiment") ){
+  if(.isSElike(weightedMotifCounts)){
     CD <- colData(weightedMotifCounts)
     weightedMotifCounts <- assay(weightedMotifCounts)
   }
-  if( inherits(unweightedPeakCounts, "SummarizedExperiment") || 
-      inherits(unweightedPeakCounts, "SingleCellExperiment") ){
+  if(.isSElike(unweightedPeakCounts)){
     if(is.null(CD)) CD <- colData(unweightedPeakCounts)
     if(is.numeric(unweightedPeakCounts$depth)){
       message("Using pre-computed unweightedPeakCounts$depth")

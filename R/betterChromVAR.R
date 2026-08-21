@@ -64,15 +64,14 @@
 betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
                            verbose=FALSE, ...){
   
-  stopifnot(inherits(object, "SummarizedExperiment") ||
-              inherits(object, "SingleCellExperiment"))
+  stopifnot(.isSElike(object))
   stopifnot(nrow(object) == nrow(annotations))
   stopifnot(!is.null(rowData(object)$bias))
   bias <- rowData(object)$bias
   motifCD <- flbias <- NULL
   if(!is.null(rowData(object)$flbias)) flbias <- rowData(object)$flbias
   
-  if( inherits(annotations, "SummarizedExperiment") ){
+  if(.isSElike(annotations)){
     motifCD <- colData(annotations)
     annotations <- assay(annotations)
   } 

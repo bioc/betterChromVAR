@@ -32,8 +32,7 @@ getBackgroundKNN <- function(se, expectation=NULL, bias=NULL, k=50,
                                     weights=c("linear","poly","none"), 
                                     pseudo=0.1, ...){
   weights <- match.arg(weights)
-  stopifnot(inherits(se, "SummarizedExperiment") ||
-              inherits(se, "SingleCellExperiment"))
+  stopifnot(.isSElike(se))
   if(!is.null(bias)){
     stopifnot(is.data.frame(bias) && nrow(bias)==nrow(se))
   }else{

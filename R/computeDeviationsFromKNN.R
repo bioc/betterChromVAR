@@ -42,8 +42,7 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=1,
   stopifnot(nrow(object) == nrow(annotations))
   stopifnot(l>=0 & l<=1)
   
-  if (inherits(object, "SummarizedExperiment") ||
-      inherits(object, "SingleCellExperiment")) {
+  if(.isSElike(object)){
     counts <- assay(object, "counts")
     depth <- object$depth
     if(is.null(depth)) depth <- Matrix::colSums(counts)
@@ -52,7 +51,7 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=1,
     depth <- Matrix::colSums(counts)
     object <- SummarizedExperiment(list(counts=counts))
   }
-  if(inherits(annotations, "SummarizedExperiment"))
+  if(.isSElike(annotations))
      annotations <- assay(annotations)
   
   stopifnot(nrow(object)==nrow(annotations))

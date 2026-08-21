@@ -49,10 +49,7 @@
 #' attach(getDummyData())
 #' e <- getExpectation(counts)
 getExpectation <- function(counts, grouping=NULL, normalize=TRUE){
-  if( inherits(counts, "SummarizedExperiment") || 
-      inherits(counts, "SingleCellExperiment") ){
-    counts <- assay(counts, "counts")
-  }
+  if(.isSElike(counts)) counts <- assay(counts, "counts")
   if(is.null(grouping) || length(unique(grouping))==1)
     return(DelayedMatrixStats::rowMeans2(counts))
   grouping <- factor(grouping)
@@ -205,7 +202,7 @@ getDummyData <- function(nRegions=500, nSamples=10, nMotifs=5){
 #' # not run:
 #' # se <- addGCBias(se, genome)
 addGCBias <- function(object, genome){
-  if(inherits(object, "SummarizedExperiment")){
+  if(.isSElike(object)){
     stopifnot(!is.null(rowRanges(object)))
     rowRanges(object) <- addGCBias(rowRanges(object), genome)
     return(object)
@@ -227,7 +224,7 @@ addGCBias <- function(object, genome){
     }
   }
   if(is.character(grouping) && length(grouping)==1 && 
-     inherits(object, "SummarizedExperiment") &&
+     .isSElike(object) &&
      grouping %in% colnames(colData(object))){
     grouping <- colData(object)[[grouping]]
   }
@@ -276,4 +273,10 @@ normalizeDevsForSize <- function(dev){
   stopifnot(length(dim(annotations))==2)
   if(max(annotations) > 1 || min(annotations)<0)
     warning("`annotations` should be either binary or weights from 0 to 1.")
+}
+
+.isSElike <- function(object){
+  inherits(object, "SummarizedExperiment") ||
+    inherits(object, "SingleCellExperiment") ||
+    inherits(object, "RangedSummarizedExperiment")
 }
