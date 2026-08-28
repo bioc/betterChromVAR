@@ -1,6 +1,6 @@
 bibentry(bibtype = "Article",
          title = "Addressing technical variations in ATAC-seq data and improving motif accessibility analyses",
-         author = c(,
+         author = c(
                     person("Jiayi", "Wang"),
                     person("Emanuel", "Sonder"),
                     person("Silvia", "Domcke"),
