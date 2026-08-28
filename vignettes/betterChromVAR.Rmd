@@ -40,7 +40,8 @@ considerably faster than the C++ reimplementation in ArchR
 [@granja2021archr]. Contrarily to the original chromVAR, it is entirely
 deterministic, and achieves much higher efficiency by replacing permutations 
 with an analytical solution and computing expectations and variance at the 
-level of bias bins, instead of in the peak-space.
+level of bias bins, instead of in the peak-space (for more detail, see 
+[@Wang2026]).
 
 In addition, `r Biocpkg("betterChromVAR")` includes a few additions,
 such as simpler weighted expectations, bias shrinkage, and an ATAC-seq
@@ -339,7 +340,7 @@ dev <- computeDeviationsFromKNN(counts, bg, motifMatches)
 We note, however, that this approach is considerably slower (although still 
 substantially faster than the original chromVAR or the ArchR re-implementation),
 requires more memory, and, at the single-cell level, produces slightly more 
-variable deviations across replicate cells.
+variable deviations across replicate cells [@Wang2026].
 We therefore recommend using the more scalable bin-based variant, unless 
 working with bulk data with fragment length bias (or any other extra bias 
 dimensions, see the `bias` argument of `getBackgroundKNN()`).
