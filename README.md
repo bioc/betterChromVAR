@@ -32,7 +32,7 @@ deviations from ATAC-seq data and motif annotations. The functions
 additionally have extra options and also include an ATAC-seq normalization 
 method based on the general chromVAR logic. See the 
 [package documentation](https://bioconductor.org/packages/devel/bioc/vignettes/betterChromVAR/inst/doc/betterChromVAR.html)
-and the related [preprint](https://doi.org/10.64898/2026.08.21.746151).
+and the related [preprint](https://www.biorxiv.org/content/10.64898/2026.08.21.746151).
 
 We note that only the components of chromVAR used to compute motif deviations 
 were reimplemented here. On a dataset of ~31k cells, ~150k regions, and ~2k 
