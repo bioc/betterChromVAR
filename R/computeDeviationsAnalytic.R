@@ -16,6 +16,20 @@
 #'   Either 'global' (default), i.e. the global expectation (same as the 
 #'   original chromVAR), 'local' (background expectation of the cell/sample), 
 #'   or 'none' (denominator of 1). 'global' (default) is recommended.
+#' @param fpc Logical, whether to apply finite population correction (see
+#'   details below). Disable (`fpc=FALSE`) to reproduce the behavior of the 
+#'   original chromVAR.
+#'
+#' @details
+#' `fpc` corrects correct the null variance used (as denominator) for the 
+#' z-scores for the fact that the expectation of each cell is estimated from 
+#' the cell's own counts, including in peaks containing the motif. This 
+#' correlation between observed and expected counts reduces the variance of 
+#' their difference in a way that depends on the proportion of peaks matching
+#' the motif. This is negligilbe for motifs matching few peaks, and especially
+#' affects prevalent motifs concentrated in a few background bins (e.g. GC-rich
+#' motifs). The correction typically has little effect on cell ranking within a
+#' motif.
 #'
 #' @returns A SummarizedExperiment (or a list if `retSE=FALSE`).
 #' @importFrom Matrix t crossprod tcrossprod
@@ -36,7 +50,8 @@
 computeDeviationsAnalytic <- function(object, background, annotations,
                                       verbose=FALSE, retSE=TRUE,
                                       compute=c("deviations","z","variability"),
-                                      denominator=c("global","local","none")){
+                                      denominator=c("global","local","none"),
+                                      fpc=TRUE){
   # Check input validity
   stopifnot(nrow(object)==nrow(annotations))
   compute <- match.arg(compute, several.ok=TRUE)
@@ -92,7 +107,12 @@ computeDeviationsAnalytic <- function(object, background, annotations,
   if("variability" %in% compute) compute <- union(compute, "z")
   if(any("z" %in% compute)){
     # z = (Obs-exp)/sdExpect
-    motif_bg_sd <- sqrt(pmax(0, as.matrix(motifBinCounts %*% background@V)))
+    if(isTRUE(fpc)){
+      motif_bg_var <- .fpcVariance(annotations, background, background@V)
+    }else{
+      motif_bg_var <- as.matrix(motifBinCounts %*% background@V)
+    }
+    motif_bg_sd <- sqrt(pmax(0, motif_bg_var))
     a$z <- deviations / motif_bg_sd
   }
   if("deviations" %in% compute){
@@ -116,6 +136,8 @@ computeDeviationsAnalytic <- function(object, background, annotations,
   }
     
   d <- data.frame(N=Matrix::colSums(annotations),
+                  Neff=.effectiveN(annotations, background, 
+                                   background@expectation, fpc),
                   total=rowSums(observed_motif_sum))
   
   if("variability" %in% compute){

@@ -215,6 +215,59 @@ addGCBias <- function(object, genome){
   object
 }
 
+# Finite-population correction for the null variance of a motif's summed counts.
+#
+# For a motif m, the deviation of a cell is S = sum_q a_qm (x_q - E_b(q)), where 
+# x_q is the count of peak q, a_qm its annotation (0/1 or a weight), and E_b the
+# expected count per peak of its bin b, which is estimated from the cell's own 
+# counts in the bins around b (E_b = sum_b' P_bb' T_b', with T_b' the counts in
+# bin b' and P the bin-to-bin probabilities). The peaks of the motif are thus
+# part of their own expectation. Writing S as sum_q c_q x_q, with
+#   c_q = a_qm - g_b(q),   g_b' = sum_b N_b P_bb'   (N_b: sum of a_qm in bin b),
+# and assuming independent peaks with variance V_b, the variance of S is
+#   sum_q c_q^2 V_b(q) = sum_b V_b * coef_b,   
+#   coef_b = A2_b - 2 g_b N_b + n_b g_b^2   (A2_b: sum of a_qm^2 in bin b; n_b: 
+#   number of peaks in bin b)
+# instead of sum_b V_b N_b. `.fpcStats` returns these quantities (bins x motifs).
+.fpcStats <- function(annotations, background){
+  nb <- background@binDensity
+  bin2peak <- sparseMatrix(i=background@peak2bin, j=seq_along(background@peak2bin),
+                           dims=c(length(nb), nrow(annotations)))
+  N <- as.matrix(bin2peak %*% annotations)
+  A2 <- as.matrix(bin2peak %*% (annotations * annotations))
+  g <- as.matrix(Matrix::crossprod(background@binBinProbs, N))
+  list(N=N, A2=A2, g=g, coef=A2 - 2*g*N + nb*g^2)
+}
+
+# Null variance of the motif sums (motifs x cells) with the finite-population 
+# correction; V is the bins x cells matrix of background variances.
+.fpcVariance <- function(annotations, background, V){
+  as.matrix(Matrix::crossprod(.fpcStats(annotations, background)$coef, V))
+}
+
+# Effective number of peaks of each motif: the number of peaks (N) of a motif 
+# with the same sensitivity of its z-score to a same relative change in all of 
+# its peaks. A change in the counts of the motif's peaks also changes the 
+# expectation (see above), which attenuates the signal as well as the noise; 
+# the z-score of the motif is proportional to the square root of
+#   Neff = N * signal^2 / (variance * X),  
+# with signal = sum_b E_b (A2_b - g_b N_b), variance = sum_b E_b coef_b (or 
+# sum_b E_b N_b without finite-population correction) and X = sum_b E_b N_b, 
+# where E_b is the expected count per peak around bin b (the variance of the 
+# counts being taken as proportional to their mean). Without overlap between 
+# a motif's peaks and their expectation Neff = N; with an even spread of the
+# motif's peaks across bins, Neff = N(1-N/P).
+.effectiveN <- function(annotations, background, expectation, fpc=TRUE){
+  st <- .fpcStats(annotations, background)
+  bin2peak <- sparseMatrix(i=background@peak2bin, j=seq_along(background@peak2bin),
+                           dims=c(length(background@binDensity), nrow(annotations)))
+  Eb <- as.numeric(background@binBinProbs %*% (bin2peak %*% expectation))
+  X <- colSums(Eb * st$N)
+  signal <- colSums(Eb * (st$A2 - st$g*st$N))
+  variance <- colSums(Eb * (if(isTRUE(fpc)) st$coef else st$N))
+  colSums(st$N) * signal^2 / (variance * X)
+}
+
 .groupingInput <- function(grouping, object, fillNULL=FALSE){
   if(is.null(grouping)){
     if(fillNULL){
@@ -236,6 +289,16 @@ addGCBias <- function(object, genome){
 #' 
 #' Normalizes the z-scores assay of a deviations object to make the scores 
 #' comparable across motifs with different number of matches.
+#' 
+#' @details
+#' If a TF changes the accessibility of all its motif matches by the same 
+#' relative amount, the z-score of its motif increases with the square root of
+#' the effective number of matches, `Neff` (see the `rowData` of the object),
+#' which is smaller than the number of matches `N` for motifs matching a large 
+#' share of the peaks in the bins in which they are found, since the 
+#' expectation of the cells is estimated from the same peaks. The z-scores are 
+#' multiplied by `sqrt(median(Neff)/Neff)`. For objects without `Neff` (e.g. 
+#' produced by earlier versions) `N` is used instead.
 #'
 #' @param dev A SummarizedExperiment object as produced by 
 #'   \code{\link{betterChromVAR}} or \code{\link{computeDeviationsAnalytic}}.
@@ -251,9 +314,10 @@ addGCBias <- function(object, genome){
 normalizeDevsForSize <- function(dev){
   stopifnot(inherits(dev, "SummarizedExperiment"))
   stopifnot("z" %in% assayNames(dev))
-  stopifnot(!is.null(rowData(dev)$N))
-  N <- rowData(dev)$N
-  assay(dev, "norm") <- assay(dev, "z")*sqrt(round(median(N))/N)
+  N <- rowData(dev)$Neff
+  if(is.null(N)) N <- rowData(dev)$N
+  stopifnot(!is.null(N))
+  assay(dev, "norm") <- assay(dev, "z")*sqrt(median(N)/N)
   dev
 }
 
@@ -279,4 +343,37 @@ normalizeDevsForSize <- function(dev){
   inherits(object, "SummarizedExperiment") ||
     inherits(object, "SingleCellExperiment") ||
     inherits(object, "RangedSummarizedExperiment")
+}
+
+
+.bpFromThreads <- function(nthreads, progressbar=FALSE, default=1){
+  if(is.null(nthreads)) nthreads <- default
+  if(inherits(nthreads, "BiocParallelParam")) return(nthreads)
+  if(is.numeric(nthreads) && length(nthreads)==1 && nthreads>0 &&
+     nthreads==round(nthreads)){
+    # make the global seed impact the BiocParallel one:
+    seed <- sample.int(1000, 1L) 
+    if(nthreads==1) return(SerialParam(progressbar=progressbar, RNGseed=seed))
+    return(MulticoreParam(as.integer(nthreads), progressbar=progressbar, 
+                          RNGseed=seed))
+  }
+  stop("`nthreads` should either be a positive integer, or a ",
+       "BiocParallelParam object.")
+}
+
+# Validates and expands the `kappa` argument (scalar, vector with one value per
+# motif, or output of estimateNoiseKappa)
+.checkKappa <- function(kappa, n){
+  if(is.data.frame(kappa)) kappa <- kappa$kappa
+  if(!is.numeric(kappa) || !(length(kappa) %in% c(1L, n)) || anyNA(kappa) ||
+     any(kappa<=0))
+    stop("`kappa` should be a positive number, or a vector of positive ",
+         "numbers with one value per row of `dev`.")
+  rep(kappa, length.out=n)
+}
+
+.asDgC <- function(x){
+  if(is(x, "dgCMatrix")) return(x)
+  if(is(x, "DelayedMatrix")) x <- as.matrix(x)
+  as(as(x, "dMatrix"), "CsparseMatrix")
 }
