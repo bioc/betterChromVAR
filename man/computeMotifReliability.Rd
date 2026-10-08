@@ -34,8 +34,8 @@ estimation of the standard error of the reliability.}
 only memory usage).}
 }
 \value{
-A data.frame with one row per motif, and the columns \code{reliability}
-and \code{reliability.se}.
+A data.frame with one row per motif, and the columns \code{reliability},
+\code{reliability.se}, \code{reliability.pval} and \code{reliability.adjPval}.
 }
 \description{
 Estimates the reliability of the single-cell deviations of each motif, i.e.
@@ -45,7 +45,21 @@ analytic noise variance of the deviations.
 \details{
 Motifs with a reliability close to 0 carry no cell-level information in the
 given dataset (and could be discarded for the purpose of analyses at the
-single-cell level). The estimate is based on the accuracy of the analytic
+single-cell level). The p-value (\code{reliability.pval}) is that of a one-sided
+test of the null hypothesis that the deviations of the motif only vary
+across cells because of noise, i.e. that the reliability is zero. If this is
+the case, the deviations standardized by their noise standard deviation (and
+centered on their precision-weighted mean) have a variance of 1. We test
+whether the observed variance is larger, using the kurtosis-adjusted
+standard error of the log-variance of Bonett (2006), as in
+\code{\link{computeMotifVariability}} (the test does not depend on
+\code{cellWeights}). As it relies on the noise variance, it is sensitive to its
+calibration: with many cells, even a small underestimation of the noise
+variance leads to significant p-values for motifs with a negligible
+reliability, so that the p-value should be interpreted together with the
+reliability. Adjusted p-values use the Benjamini-Hochberg method.
+
+The estimate is based on the accuracy of the analytic
 noise variance, which in our hands is excellent. Alternatively, the
 \code{\link{estimateNoiseKappa}} function estimates it empirically, but it is
 slower and based on a subset of the cells.

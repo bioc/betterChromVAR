@@ -41,3 +41,6 @@ computeMotifVariability
 z <- matrix(rnorm(mean=rnorm(10), sd=runif(10, max=2), 200), nrow=10)
 var <- computeMotifVariability
 }
+\seealso{
+\code{\link{computeMotifReliability}}.
+}

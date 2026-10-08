@@ -16,6 +16,7 @@
 #' @returns A data.frame containing the variability and confidence interval 
 #'   around it, as well as significance, for each motif. If `z` is a 
 #'   `SummarizedExperiment`, the data.frame will be stored in `rowData(z)`.
+#' @seealso \code{\link{computeMotifReliability}}.
 #' @export
 #' @importFrom stats qchisq
 #' @importFrom matrixStats rowSds rowQuantiles
