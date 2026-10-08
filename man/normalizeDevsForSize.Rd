@@ -17,6 +17,16 @@ The \code{dev} object with an additional assay named 'norm'.
 Normalizes the z-scores assay of a deviations object to make the scores
 comparable across motifs with different number of matches.
 }
+\details{
+If a TF changes the accessibility of all its motif matches by the same
+relative amount, the z-score of its motif increases with the square root of
+the effective number of matches, \code{Neff} (see the \code{rowData} of the object).
+\code{Neff} is smaller than the number of matches \code{N} for motifs matching a large
+share of the peaks in the bins in which they are found, since the
+expectation of the cells is estimated from the same peaks. The z-scores are
+multiplied by \code{sqrt(median(Neff)/Neff)}. For objects without \code{Neff} (e.g.
+produced by earlier versions) \code{N} is used instead.
+}
 \examples{
 attach(getDummyData())
 dev <- betterChromVAR(counts, motifMatches)

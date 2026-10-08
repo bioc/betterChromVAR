@@ -293,8 +293,8 @@ addGCBias <- function(object, genome){
 #' @details
 #' If a TF changes the accessibility of all its motif matches by the same 
 #' relative amount, the z-score of its motif increases with the square root of
-#' the effective number of matches, `Neff` (see the `rowData` of the object),
-#' which is smaller than the number of matches `N` for motifs matching a large 
+#' the effective number of matches, `Neff` (see the `rowData` of the object).
+#' `Neff` is smaller than the number of matches `N` for motifs matching a large 
 #' share of the peaks in the bins in which they are found, since the 
 #' expectation of the cells is estimated from the same peaks. The z-scores are 
 #' multiplied by `sqrt(median(Neff)/Neff)`. For objects without `Neff` (e.g. 
