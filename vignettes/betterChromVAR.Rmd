@@ -144,10 +144,12 @@ The resulting `dev` object is a SummarizedExperiment with the same
 columns (and colData) as the original `counts` object, but with the
 motifs as rows (instead of the original peaks). The values can be
 interpreted as the relative activity, across samples or cells, of the
-corresponding TFs[^5]. When the function is used with default arguments,
-the results are virtually the same as the original chromVAR (averaging
-over the noise coming from the random background selection of the
-original method).
+corresponding TFs[^5]. When the function is used with `fpc=FALSE` (and 
+otherwise default arguments) the results are virtually the same as the original 
+chromVAR (averaging over the noise coming from the random seeds). `fpc=TRUE`
+(default), it includes an additional finite-population correction which 
+affects motifs matching a large fraction of the peaks 
+(see the `fpc` argument of `computeDeviationsAnalytic()`).
 
 [^5]: Note, however, that similar motifs will be given similar activity
     estimates, so that it is often hard to know which of a set of
@@ -165,17 +167,6 @@ you use the `z` assay for downstream analysis (such as differential TF
 activity using `limma`). If the samples have very different library
 sizes, the `z` scores will be influenced by that, and it might be
 preferable to use the `deviations` assay.
-
-The variability of each motif across the dataset is stored in the
-rowData of the object :
-
-```{r variability}
-rowData(dev)
-```
-
-Note that the confidence interval is based on analytic estimates; if bootstrap 
-confidence intervals (as in the original approach) are needed, see the 
-`computeMotifVariability()` function.
 
 ## Individual steps of betterChromVAR
 
@@ -273,6 +264,76 @@ way), make sure to use this procedure. In recent versions,
 quite likely that better performance for this step would be obtained
 using for instance using the `aggregateAcrossCells()` function of the
 `r Biocpkg("scrapper")` package.
+
+## Motif variability and reliability
+
+The variability of each motif across the dataset is stored in the
+rowData of the output of `betterChromVAR()` :
+
+```{r variability}
+rowData(dev)
+```
+
+This is comparable to the variability produced by the original `chromVAR`,
+however the confidence intervals are analytic estimates. While these are 
+generally good enough, it is also possible to obtain bootstrap confidence 
+intervals (as in the original approach) through the 
+`computeMotifVariability()` function.
+
+An alternative way to assess how useful or informative motifs are is how 
+reliably they capture biological variation. This can be estimated by the 
+proportion of their variance across cells that is not attributable to sampling 
+noise. The `estimateNoiseKappa()` function can be used to assess this:
+
+```{r reliability}
+motifRel <- estimateNoiseKappa(counts, annotation=motifMatches, background=bg)
+head(motifRel)
+```
+
+While in practice reliability and variability of a motif are correlated, they
+do not track the same thing, even in this toy example:
+
+```{r motifComparison}
+cor(rowData(dev)$variability, motifRel$reliability)
+```
+
+Two motifs can have the same reliability while having very different 
+variability, or the converse. Both are therefore relevant information in 
+selecting useful motifs.
+
+
+## Smoothing the deviations of single cells across neighboring cells
+
+The deviations of individual cells are very noisy: for most motifs, almost all
+of the cell-to-cell variation is sampling noise (as estimated with 
+`estimateNoiseKappa()`). Working at the pseudobulk level addresses this issue;
+alternatively, it is possible to use the *k* nearest neighbors (kNN) of a cell
+to 'smooth' its estimates. `smoothDeviationsKNN()` does exactly this.
+
+Note that the kNN used for smoothing should *not* be based on the motif 
+deviations, but can for example be computed from some embedding of the peak 
+counts (e.g. LSI or similar). `smoothDeviationsKNN()` shrinks the motif 
+deviations of each cell towards that of its neighbors in an adaptive fashion:
+cells whose deviations are more trustworthy (e.g. because the cell has more 
+fragments) and motifs with higher reliability are smoothed less. The smoothing 
+assumes that neighboring cells have similar motif activities: effects that are 
+specific to individual cells and small relative to the noise are partly 
+smoothed out (the `tauScale` argument can be used as a knob to adjust how 
+aggressive the smoothing is).
+
+```{r smoothing}
+# for the sake of the example we do a very basic embedding, using a proper 
+# scATAC-seq embedding is recommended
+emb <- prcomp(t(log1p(assay(counts))))$x[,1:3]
+knn <- BiocNeighbors::findKNN(emb, k=3)
+dev <- smoothDeviationsKNN(dev, knn)
+assayNames(dev)
+```
+
+The smoothed deviations and z-scores are added to the object as the assays.
+Note that the smoothed values of neighboring cells are not independent 
+observations anymore, and as such they should not be used in tests that treat 
+cells as independent (the kind of tests you should arguably never do anyway).
 
 <br/><br/>
 
