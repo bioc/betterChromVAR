@@ -92,7 +92,13 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
   
   # mean and variance of the counts of each bin's background peaks (B x S)
   E <- binBinProbs %*% binCounts
-  V <- binBinProbs %*% (bin2peakMat %*% (counts^2)) - E^2
+  V <- binBinProbs %*% (bin2peakMat %*% (counts^2))
+  if(is(V,"CsparseMatrix") && identical(V@p, E@p) && identical(V@i, E@i)){
+    # same sparsity pattern: subtract on the values to save memory
+    V@x <- V@x - E@x^2
+  }else{
+    V <- V - E^2
+  }
   V@x[which(V@x<0)] <- 0
   V <- drop0(V)
   
