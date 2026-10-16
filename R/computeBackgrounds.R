@@ -90,6 +90,12 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
   
   binCounts <- bin2peakMat %*% counts
   
+  # mean and variance of the counts of each bin's background peaks (B x S)
+  E <- binBinProbs %*% binCounts
+  V <- binBinProbs %*% (bin2peakMat %*% (counts^2)) - E^2
+  V@x[which(V@x<0)] <- 0
+  V <- drop0(V)
+  
   if(shrinkage != "none"){
     if(verbose) message("Applying shrinkage")
     il <- split(seq_len(ncol(binCounts)), grouping)
@@ -111,15 +117,9 @@ computeBackgrounds <- function(object, bins, grouping=NULL, expectation=NULL,
       binCounts2 %*% Diagonal(x=cs2)
     }))
     binCounts <- binCounts[,order(unlist(il))]
+    # shrinkage stabilizes the expectations; V keeps the observed spread
+    E <- binBinProbs %*% binCounts
   }
-  
-  # bin-level expectations and variances (B x S)
-  E <- (binBinProbs %*% binCounts)
-  di <- Diagonal(x = 1/pmax(1, bins@binDensity))
-  V <- (di %*% (bin2peakMat %*% (counts^2))) - E^2
-  V@x[which(V@x<0)] <- 0
-  V <- drop0(V)
-  V <- binBinProbs %*% (V * bins@binDensity)
   
   if(is(E,"dgeMatrix")) E <- as.matrix(E)
   if(is(V,"dgeMatrix")) V <- as.matrix(V)
