@@ -8,7 +8,8 @@
 * Fixed wrong denominator in `computeDeviationsWeighted`
 * Fixed mistake in background variance (affecting the scale of the z-scores):
   it is now the variance of the counts of each bin's background peaks (as
-  drawn by `sampleBackgroundPeaks()`), computed before any shrinkage
+  would be drawn by `sampleBackgroundPeaks()`), and shrinkage is only
+  applied to the expectation.
 
 ## Changes
 * The z-scores (and things based on it, e.g. motif variability) now include a
