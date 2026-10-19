@@ -1,6 +1,6 @@
 #' computeDeviationsWeighted
 #' 
-#' A variant of \code{\link{computeDeviationsWeighted}} enabling the 
+#' A variant of \code{\link{computeDeviationsAnalytic}} enabling the 
 #' computation of deviations from weighted foreground counts. Specifically, this
 #' functions handles the normalization of the difference in magnitude between
 #' the (weighted) foreground and background.
@@ -19,9 +19,25 @@
 #'   `SummarizedExperiment` of background peak counts (with bias data in 
 #'   `rowData`). If missing, will be created based on `unweightedPeakCounts`.
 #' @param retSE Logical; whether to return a SummarizedExperiment object.
+#' @param fpc Logical; whether to apply the finite-population correction to the
+#'   null variance used for the z-scores (see
+#'   \code{\link{computeDeviationsAnalytic}}).
 #' @param ... Passed to \link{getBackgroundBins} (can for instance be used to
 #'   pass bias info if not contained in the objects). Ignored if `bg` is a
 #'   \code{\link[betterChromVAR]{bcvBackground-class}} object.
+#'
+#' @details
+#' The background expectation of the (unweighted) peak counts is rescaled, for
+#' each motif, by the ratio between the mean weighted and mean unweighted 
+#' counts of the motif, and its variance by the square of that ratio. This 
+#' assumes that the weights are similar across the peaks of a motif: if the 
+#' weights vary a lot between peaks (coefficient of variation `CV`), the 
+#' variance of the weighted counts is larger, by a factor ~`1+CV^2`, than the 
+#' variance used here, and the z-scores are overestimated accordingly. The 
+#' finite-population correction (`fpc`) also assumes that the weighted counts 
+#' are proportional to the unweighted counts of the same peaks, from which the
+#' expectation is estimated. Neither the z-scores nor the `deviations` depend 
+#' on the overall magnitude of the weights.
 #'
 #' @returns A SummarizedExperiment (or a list if `retSE=FALSE`). If overall
 #'   motif variability and their significance are additionally needed, see 
@@ -41,7 +57,7 @@
 #' dev2 <- betterChromVAR(counts, motifMatches)
 #' stopifnot(identical(assays(dev1), assays(dev2)))
 computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
-                                      annotations, bg=NULL, retSE=TRUE, ...){
+                                      annotations, bg=NULL, retSE=TRUE, fpc=TRUE, ...){
   stopifnot(ncol(weightedMotifCounts)==ncol(unweightedPeakCounts))
   stopifnot(nrow(weightedMotifCounts)==ncol(annotations))
   stopifnot(nrow(unweightedPeakCounts)==nrow(annotations))
@@ -60,7 +76,7 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
       stop("The `background` object does not match the other objects' dimensions.")
   }
   
-  CD <- motifCD <- depth <- NULL
+  CD <- motifCD <- NULL
   if( inherits(annotations, "SummarizedExperiment") ){
     motifCD <- colData(annotations)
     annotations <- assay(annotations)
@@ -73,13 +89,8 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   }
   if(.isSElike(unweightedPeakCounts)){
     if(is.null(CD)) CD <- colData(unweightedPeakCounts)
-    if(is.numeric(unweightedPeakCounts$depth)){
-      message("Using pre-computed unweightedPeakCounts$depth")
-      depth <- unweightedPeakCounts$depth
-    }
     unweightedPeakCounts <- assay(unweightedPeakCounts)
   }
-  if(is.null(depth)) depth <- Matrix::colSums(unweightedPeakCounts)
   
   binMap <- bg@peak2bin
   bin2peakMat <- sparseMatrix(i = binMap, j = seq_along(binMap), 
@@ -94,12 +105,18 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   
   numerator <- weightedMotifCounts - motif_bg_exp
   
-  bg_variance_scaled <- as.matrix(motifBinCounts %*% bg@V) * (motif_sf^2)
+  if(isTRUE(fpc)){
+    bg_variance_scaled <- .fpcVariance(annotations, bg, bg@V) * (motif_sf^2)
+  }else{
+    bg_variance_scaled <- as.matrix(motifBinCounts %*% bg@V) * (motif_sf^2)
+  }
   z <- numerator / sqrt(pmax(0, bg_variance_scaled))
   globalMotifAvg <- as.vector(Matrix::crossprod(annotations, 
                                                 bg@expectation))
   sf <- bg@depth/sum(bg@expectation)
-  deviations <- numerator/outer(globalMotifAvg, sf)
+  # the global expectation is rescaled to the scale of the weighted counts, as
+  # the numerator, so that the deviations are relative to it
+  deviations <- numerator/outer(globalMotifAvg*motif_sf, sf)
   a <- lapply(list(deviations=deviations, z=z), \(x){
     if(is(x, "dgeMatrix")) x <- as.matrix(x)
     x
@@ -107,7 +124,8 @@ computeDeviationsWeighted <- function(weightedMotifCounts, unweightedPeakCounts,
   
   if(!isTRUE(retSE)) return(a)
     
-  d <- data.frame(N=Matrix::colSums(annotations))
+  d <- data.frame(N=Matrix::colSums(annotations),
+                  Neff=.effectiveN(annotations, bg, bg@expectation, fpc))
   
   .packageDevSE(a, SummarizedExperiment(list(), colData=CD),motifCD, d)
 }

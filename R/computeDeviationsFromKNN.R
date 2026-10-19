@@ -16,6 +16,11 @@
 #'   (potentially unstable, a small value such as `0.1` is instead recommended).
 #' @param chunkSize Number of cells to process simultaneously. Increasing this
 #'   will increase speed, but also memory consumption.
+#' @param fpc Logical; whether to correct the null variance used for the 
+#'   z-scores for the fact that the expectation of each cell is estimated from 
+#'   the cell's own counts in the neighbors of the motif's peaks, some of which
+#'   are themselves peaks of the motif (default TRUE, see Details and 
+#'   \code{\link{computeDeviationsAnalytic}}).
 #' @param verbose Logical; whether to print progress messages.
 #' 
 #' @details
@@ -38,7 +43,7 @@
 #'                                 annotations=motifMatches)
 #' dev
 computeDeviationsFromKNN <- function(object, cBg, annotations, l=1, 
-                                     chunkSize=1000, verbose=TRUE){
+                                     chunkSize=1000, fpc=TRUE, verbose=TRUE){
   stopifnot(nrow(object) == nrow(annotations))
   stopifnot(l>=0 & l<=1)
   
@@ -116,13 +121,47 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=1,
   }
   
   if(verbose) message("Computing motif expectations and variances")
-  E_motif <- WA_corrected %*% counts 
-  Term1 <- WA_corrected %*% counts^2
-  rm(WA_corrected)
+  E_motif <- WA_corrected %*% counts
+  
+  # mean count of each peak, used for the effective number of peaks
+  peak_means <- Matrix::rowMeans(counts)
+  
+  # The null variance of the motif's counts O - E = (W - Wcor) x, where Wcor
+  # is WA_corrected, is sum_q (W_mq - Wcor_mq)^2 V_q (with fpc), or 
+  # sum_q W_mq V_q (without). To avoid creating large (motifs x peaks) 
+  # matrices, (W - Wcor)^2 is computed as Wcor^2 plus a correction that only 
+  # concerns the peaks of the motif (i.e. the non-zero entries of W):
+  # W^2 - 2 W Wcor.
+  if(!is(WA_corrected, "dgCMatrix"))
+    WA_corrected <- as(as(WA_corrected, "dMatrix"), "CsparseMatrix")
+  Wt <- Matrix::summary(W)       # non-zero entries of W (i, j, x)
+  wc <- WA_corrected[cbind(Wt$i, Wt$j)]
+  # effective number of peaks of the motifs (see normalizeDevsForSize)
+  xW <- as.vector(W %*% peak_means)
+  signal <- as.vector(rowsum(Wt$x * (Wt$x - wc) * peak_means[Wt$j], Wt$i, 
+                             reorder=FALSE)[as.character(seq_len(nMotifs)),1])
+  signal[is.na(signal)] <- 0
+  if(fpc){
+    # Wcor^2, in place
+    WA_corrected@x <- WA_corrected@x^2
+    varCoef <- WA_corrected
+    varCoef2 <- Matrix::sparseMatrix(i=Wt$i, j=Wt$j, x=Wt$x^2 - 2*Wt$x*wc,
+                                     dims=dim(W))
+    varPeakMeans <- as.vector(varCoef %*% peak_means + 
+                                varCoef2 %*% peak_means)
+  }else{
+    varCoef <- W
+    varCoef2 <- NULL
+    varPeakMeans <- xW
+  }
+  rm(WA_corrected, Wt, wc)
+  Neff <- Matrix::colSums(annotations) * signal^2 / (varPeakMeans * xW)
   gc()
   
-  # Variance Term 2: lazy chunking
-  Term2 <- matrix(0, nrow = nMotifs, ncol = nCells)
+  # Peak-level variance V_q (variance of the counts of the neighbors of each 
+  # peak) in each cell, and aggregation across the peaks of each motif; done 
+  # in chunks of cells to limit memory usage
+  V_motif <- matrix(0, nrow = nMotifs, ncol = nCells)
   chunks <- split(seq_len(nCells), ceiling(seq_len(nCells) / chunkSize))
   
   cBgNorm <- Matrix::Diagonal(x=1/k)
@@ -134,15 +173,21 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=1,
     idx <- chunks[[i]]
     X_chunk <- counts[, idx, drop = FALSE]
     
-    AX_avg <- cBgNorm %*% (cBg %*% X_chunk)
-    Term2[, idx] <- as.matrix(W %*% (AX_avg^2))
+    # mean count and mean squared count of the neighbors of each peak
+    M1 <- as.matrix(cBgNorm %*% (cBg %*% X_chunk))
+    M2 <- as.matrix(cBgNorm %*% (cBg %*% (X_chunk^2)))
+    Vq <- M2 - M1^2
+    Vq[Vq < 0] <- 0
+    rm(M1, M2)
+    V_motif[, idx] <- as.matrix(varCoef %*% Vq)
+    if(!is.null(varCoef2)) V_motif[, idx] <- V_motif[, idx] +
+      as.matrix(varCoef2 %*% Vq)
+    rm(Vq)
     
     if(showPB) setTxtProgressBar(pb, i)
   }
   if(showPB) close(pb)
-  
-  V_motif <- as.matrix(Term1) - Term2
-  V_motif[V_motif < 0] <- 0 
+  rm(varCoef, varCoef2)
   
   if(verbose) message("Calculating final deviations and Z-scores")
   observed_motif <- as.matrix(W %*% counts)
@@ -150,8 +195,7 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=1,
   
   z <- numerator / sqrt(pmax(1e-12, V_motif))
   
-  peak_means <- Matrix::rowMeans(counts)
-  globalMotifAvg <- as.vector(W %*% peak_means)
+  globalMotifAvg <- xW
   sf <- depth / sum(peak_means)
   
   deviations <- numerator / outer(globalMotifAvg, sf)
@@ -159,6 +203,7 @@ computeDeviationsFromKNN <- function(object, cBg, annotations, l=1,
   o <- SummarizedExperiment(list(deviations=deviations, z=z),
                             colData=colData(object), metadata=metadata(object))
   rowData(o)$N <- Matrix::colSums(annotations)
+  rowData(o)$Neff <- Neff
   
   return(o)
 }

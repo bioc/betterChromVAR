@@ -10,6 +10,7 @@ computeDeviationsWeighted(
   annotations,
   bg = NULL,
   retSE = TRUE,
+  fpc = TRUE,
   ...
 )
 }
@@ -33,6 +34,10 @@ as produced by \code{\link{computeBackgrounds}}, or a
 
 \item{retSE}{Logical; whether to return a SummarizedExperiment object.}
 
+\item{fpc}{Logical; whether to apply the finite-population correction to the
+null variance used for the z-scores (see
+\code{\link{computeDeviationsAnalytic}}).}
+
 \item{...}{Passed to \link{getBackgroundBins} (can for instance be used to
 pass bias info if not contained in the objects). Ignored if \code{bg} is a
 \code{\link[betterChromVAR]{bcvBackground-class}} object.}
@@ -43,10 +48,23 @@ motif variability and their significance are additionally needed, see
 \code{\link{computeMotifVariability}}.
 }
 \description{
-A variant of \code{\link{computeDeviationsWeighted}} enabling the
+A variant of \code{\link{computeDeviationsAnalytic}} enabling the
 computation of deviations from weighted foreground counts. Specifically, this
 functions handles the normalization of the difference in magnitude between
 the (weighted) foreground and background.
+}
+\details{
+The background expectation of the (unweighted) peak counts is rescaled, for
+each motif, by the ratio between the mean weighted and mean unweighted
+counts of the motif, and its variance by the square of that ratio. This
+assumes that the weights are similar across the peaks of a motif: if the
+weights vary a lot between peaks (coefficient of variation \code{CV}), the
+variance of the weighted counts is larger, by a factor ~\code{1+CV^2}, than the
+variance used here, and the z-scores are overestimated accordingly. The
+finite-population correction (\code{fpc}) also assumes that the weighted counts
+are proportional to the unweighted counts of the same peaks, from which the
+expectation is estimated. Neither the z-scores nor the \code{deviations} depend
+on the overall magnitude of the weights.
 }
 \examples{
 attach(getDummyData())

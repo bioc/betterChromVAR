@@ -22,6 +22,9 @@
 #' @param nthreads Either an integer scalar indicating the number of threads to
 #'   use, or a `BiocParallelParam` object.
 #' @param verbose Logical; whether to output progress messages (default FALSE).
+#' @param fpc Logical; whether to apply the finite-population correction to the
+#'   null variance used for the z-scores (default TRUE, see
+#'   \code{\link{computeDeviationsAnalytic}}).
 #' @param ... Passed to \code{\link{getBackgroundBins}}.
 #' @author Pierre-Luc Germain
 #' 
@@ -62,7 +65,7 @@
 #' # bg <- computeBackgrounds(counts, bg)
 #' # dev <- computeDeviationsAnalytic(counts, bg, motifMatches)
 betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
-                           verbose=FALSE, ...){
+                           verbose=FALSE, fpc=TRUE, ...){
   
   stopifnot(.isSElike(object))
   stopifnot(nrow(object) == nrow(annotations))
@@ -86,17 +89,8 @@ betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
   
   ngroups <- length(levels(grouping))
                     
-  if(is.null(nthreads)){
-    BPPARAM <- SerialParam(progressbar=(verbose && ngroups>1))
-  }else if(is.integer(nthreads) && length(nthreads)==1 && nthreads>0L){
-    BPPARAM <- MulticoreParam(nthreads, progressbar=verbose)
-  }else{
-    if(!inherits(nthreads, "BiocParallelParam"))
-      stop("`nthreads` should either be a positive integer, or a ",
-           "BiocParallelParam object.")
-    BPPARAM <- nthreads
-  }
-  
+  BPPARAM <- .bpFromThreads(nthreads, progressbar=(verbose && ngroups>1))
+
   i <- seq_len(ncol(object))
   counts <- assay(object, "counts")
   if((nW <- BiocParallel::bpnworkers(BPPARAM))>1 && ncol(counts) > 100){
@@ -106,7 +100,8 @@ betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
       bg <- computeBackgrounds(counts[,i], bg[,i], expectation=expectation,
                                verbose=FALSE)
       computeDeviationsAnalytic(object[,i], bg, annotations, verbose=FALSE,
-                                retSE=FALSE, compute=c("deviations","z"))
+                                retSE=FALSE, compute=c("deviations","z"),
+                                fpc=fpc)
     })
     res <- list(deviations=Reduce(cbind2,
                                   lapply(res, function(x) x$deviations)),
@@ -118,10 +113,13 @@ betterChromVAR <- function(object, annotations, grouping=NULL, nthreads=NULL,
                              verbose=verbose)
     if(verbose) message("Computing deviations")
     res <- computeDeviationsAnalytic(object, bg, annotations, verbose=verbose,
-                                     retSE=FALSE, compute=c("deviations","z"))
+                                     retSE=FALSE, compute=c("deviations","z"),
+                                     fpc=fpc)
   }
   
-  d <- cbind(data.frame(N=colSums(annotations), total=res$total),
+  d <- cbind(data.frame(N=colSums(annotations),
+                        Neff=.effectiveN(annotations, bg, expectation, fpc),
+                        total=res$total),
              computeMotifVariability(res$z))
 
   .packageDevSE(res[1:2], object, motifCD, d)

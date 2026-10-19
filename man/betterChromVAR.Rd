@@ -10,6 +10,7 @@ betterChromVAR(
   grouping = NULL,
   nthreads = NULL,
   verbose = FALSE,
+  fpc = TRUE,
   ...
 )
 }
@@ -34,6 +35,10 @@ character of length 1 specifying a column of \code{colData(object)}.}
 use, or a \code{BiocParallelParam} object.}
 
 \item{verbose}{Logical; whether to output progress messages (default FALSE).}
+
+\item{fpc}{Logical; whether to apply the finite-population correction to the
+null variance used for the z-scores (default TRUE, see
+\code{\link{computeDeviationsAnalytic}}).}
 
 \item{...}{Passed to \code{\link{getBackgroundBins}}.}
 }

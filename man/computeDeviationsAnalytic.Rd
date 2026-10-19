@@ -11,7 +11,8 @@ computeDeviationsAnalytic(
   verbose = FALSE,
   retSE = TRUE,
   compute = c("deviations", "z", "variability"),
-  denominator = c("global", "local", "none")
+  denominator = c("global", "local", "none"),
+  fpc = TRUE
 )
 }
 \arguments{
@@ -37,12 +38,27 @@ motif variability.}
 Either 'global' (default), i.e. the global expectation (same as the
 original chromVAR), 'local' (background expectation of the cell/sample),
 or 'none' (denominator of 1). 'global' (default) is recommended.}
+
+\item{fpc}{Logical, whether to apply finite population correction (see
+details below). Disable (\code{fpc=FALSE}) to reproduce the behavior of the
+original chromVAR.}
 }
 \value{
 A SummarizedExperiment (or a list if \code{retSE=FALSE}).
 }
 \description{
 computeDeviationsAnalytic
+}
+\details{
+\code{fpc} corrects correct the null variance used (as denominator) for the
+z-scores for the fact that the expectation of each cell is estimated from
+the cell's own counts, including in peaks containing the motif. This
+correlation between observed and expected counts reduces the variance of
+their difference in a way that depends on the proportion of peaks matching
+the motif. This is negligilbe for motifs matching few peaks, and especially
+affects prevalent motifs concentrated in a few background bins (e.g. GC-rich
+motifs). The correction typically has little effect on cell ranking within a
+motif.
 }
 \examples{
 attach(getDummyData())

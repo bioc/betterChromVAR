@@ -10,6 +10,7 @@ computeDeviationsFromKNN(
   annotations,
   l = 1,
   chunkSize = 1000,
+  fpc = TRUE,
   verbose = TRUE
 )
 }
@@ -30,6 +31,12 @@ containing the foreground motif are scaled in relative importance. Set to
 
 \item{chunkSize}{Number of cells to process simultaneously. Increasing this
 will increase speed, but also memory consumption.}
+
+\item{fpc}{Logical; whether to correct the null variance used for the
+z-scores for the fact that the expectation of each cell is estimated from
+the cell's own counts in the neighbors of the motif's peaks, some of which
+are themselves peaks of the motif (default TRUE, see Details and
+\code{\link{computeDeviationsAnalytic}}).}
 
 \item{verbose}{Logical; whether to print progress messages.}
 }
